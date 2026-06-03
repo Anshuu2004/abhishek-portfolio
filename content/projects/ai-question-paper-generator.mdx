@@ -1,0 +1,46 @@
+---
+title: AI Question Paper Generator
+slug: ai-question-paper-generator
+year: 2025
+order: 4
+summary: A Flask platform pairing Gemini with a hierarchical question bank to generate CBSE / ICSE / state-board papers with bilingual export and a graceful fallback chain.
+stack:
+  - Python
+  - Flask
+  - Gemini API
+  - MySQL
+  - WeasyPrint
+  - python-docx
+  - Docker
+  - Gunicorn
+repo: https://github.com/Anshuu2004/Ai_Intelligent_Paper_Generator
+demo: https://api.simption.com/Ai_Intelligent_Paper_Generator/
+featured: false
+---
+
+## Problem
+
+{/* author-review: confirm the framing of "constraining the LLM to a board-shaped paper" matches your design intent */}
+
+Indian school exams have rigid structural constraints — specific board (CBSE, ICSE, state), class, subject, chapter coverage, controlled question-type and marks distribution — but teachers still draft them by hand. An LLM is well-suited to filling in question generation; the hard part is constraining it tightly enough to produce a board-shaped paper rather than a generic quiz.
+
+## Architecture
+
+A hierarchical question bank (Boards → Classes → Subjects → Chapters) lives in MySQL and feeds prompt construction. The user picks a board, class, subject and chapter set, then specifies question type, difficulty and total marks. Gemini receives the constraints plus the relevant question-bank context; the response is parsed and rendered.
+
+Output formats: PDF via WeasyPrint, Word via python-docx, with bilingual English / Hindi support (Noto Sans Devanagari embedded for Hindi). Answer keys are auto-generated with explanations.
+
+## Key engineering decisions
+
+- **Fallback chain: Gemini Flash → Pro → 2.0 Flash → local DB → placeholder.** Any single model can rate-limit or fail. The chain degrades gracefully — Flash is fastest, Pro is the quality backstop, 2.0 Flash is the newer model, the local DB returns canned questions for the exact chapter, and the placeholder is the last-resort "paper still generates" guarantee.
+- **WeasyPrint for PDF, python-docx for Word.** Schools need both formats. WeasyPrint handles multi-language typography correctly; python-docx is the only sane option for native `.docx`.
+- **Containerized via Docker, served with Gunicorn on Render.** Keeps the deploy reproducible and the local dev environment identical to production.
+
+## Stack
+
+Python 3, Flask, Gemini API, MySQL, WeasyPrint, python-docx, Noto Sans Devanagari, Docker, Gunicorn.
+
+## Links
+
+- Live demo: [api.simption.com/Ai_Intelligent_Paper_Generator/](https://api.simption.com/Ai_Intelligent_Paper_Generator/)
+- Repository: [github.com/Anshuu2004/Ai_Intelligent_Paper_Generator](https://github.com/Anshuu2004/Ai_Intelligent_Paper_Generator)

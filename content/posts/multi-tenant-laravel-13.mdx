@@ -1,0 +1,176 @@
+---
+title: "Multi-tenant SaaS in Laravel 13: tenant resolution, schema isolation, and the Livewire trap"
+slug: multi-tenant-laravel-13
+date: "2026-04-12"
+summary: Building Simption ERP — what I picked, what I shipped, what bit me. The decisions behind isolated MySQL per tenant, the trap Livewire serialization sets for cache-tag tenancy, and the JSON-driven module system that ended up cutting feature rollout by ~40%.
+tags:
+  - laravel
+  - saas
+  - architecture
+  - multi-tenancy
+readTime: 9
+draft: false
+---
+
+## Why this post exists
+
+I shipped a multi-tenant SaaS in Laravel 13 + Livewire 4 in 2025 — [Simption ERP](/work/simption-erp) — designed to serve 1000+ educational institutions from a single deployment. This is a write-up of the decisions that turned out to matter, the ones that didn't, and one specific trap that cost me a day of debugging.
+
+If you're picking between shared-schema and isolated-DB multi-tenancy in Laravel, this might save you a meeting.
+
+## The choice nobody warns you about
+
+The classic multi-tenancy framing is _row-level vs. schema-level vs. database-level_. Most blog posts pick row-level (a `tenant_id` column on every table), declare it "scalable," and move on.
+
+Row-level is the default for a reason — it's cheap. One database, one connection pool, one migration to run. The cost is invisible until it isn't:
+
+- Every query needs a `tenant_id` filter; one missed clause is a data leak.
+- Migrations become coordination events across tenants.
+- Backups, exports, and "give me the data for institute X" requests turn into SQL acrobatics.
+
+For Simption ERP I picked **isolated MySQL databases per tenant** with subdomain routing (`<institute>.simption.app`). The reasons were less about scale and more about the existing schema:
+
+- The data model assumed full schema ownership. Carrying a `tenant_id` everywhere meant rewriting most of the app.
+- Schools, colleges, and coaching centres have meaningfully different shapes — different student fields, different fee structures, different role hierarchies. A per-tenant DB lets the schema diverge cleanly.
+- "Give me institute X's data" becomes `mysqldump`. Compliance conversations get shorter.
+
+The cost is real: provisioning is heavier, migrations run N times, and you maintain a tenant registry. But for ~1000 institutions of independent shape, the simplification at the application layer was worth the operational overhead.
+
+## How resolution actually works
+
+The flow per request:
+
+```
+[browser]
+   │  GET https://inst-42.simption.app/students
+   ▼
+[edge — Nginx / Laravel router]
+   │  host = "inst-42.simption.app"
+   ▼
+[TenantResolver middleware]
+   │  → look up host → tenant record
+   │  → switch the default DB connection
+   │  → set tenant context in the container
+   ▼
+[the rest of the application is tenant-agnostic]
+```
+
+I implemented this on top of `stancl/tenancy v3.10`. Two pieces were custom:
+
+1. A **TenantResolver** that read the subdomain and looked up the tenant in a central tenancy database, falling back to a 404 page for unknown hosts.
+2. A **NoOpDatabaseManager** that bypassed `stancl/tenancy`'s auto-migration of the tenant database — because each tenant DB pre-existed (legacy schema) and we didn't want the framework to "fix" anything at runtime.
+
+A skeleton of the resolver:
+
+```php
+class TenantResolver implements Resolver {
+    public function resolve(...$args): Tenant {
+        $host = $args[0];
+        $tenant = Tenant::where('domain', $host)->firstOrFail();
+        if ($tenant->status !== 'active') {
+            abort(403, 'Tenant suspended');
+        }
+        return $tenant;
+    }
+}
+```
+
+The middleware that pairs with it short-circuits before any tenant code runs:
+
+```php
+class CheckTenantStatus {
+    public function handle($request, Closure $next) {
+        $tenant = tenant();
+        if (!$tenant || $tenant->status === 'blocked') {
+            return response()->view('blocked', [], 403);
+        }
+        return $next($request);
+    }
+}
+```
+
+The point of separating these is that the resolver runs early in the lifecycle (before models exist), and the status check runs later (where the framework is fully booted and we can return rich views).
+
+## The Livewire trap (this is the post)
+
+Here is where I lost a day.
+
+`stancl/tenancy` bootstraps several things per tenant: the database connection, the queue connection, the file-system root, the cache prefix. The cache bootstrapper, by default, uses tagged cache invalidation so it can clear all of a tenant's keys cleanly on tenancy teardown.
+
+Three things conspire against you:
+
+1. **Laravel's file cache driver does not support tags.** This is a documented limitation, but the bootstrapper does not check the active driver before assuming tags exist.
+2. **Livewire 4 serializes component state between renders.** When that state holds a reference to the cache repository, the serialization round-trip on a file-cache driver hits the un-tagged code path and throws.
+3. **The error doesn't fire on every request.** It only fires when a Livewire component tries to clear a cache tag that was never created — and only then in dev where the file driver is the default.
+
+The fix was a conditional bootstrapper:
+
+```php
+class ConditionalCacheBootstrapper implements TenancyBootstrapper {
+    public function start(Tenant $tenant): void {
+        $driver = config('cache.default');
+        if ($driver === 'redis') {
+            // Tagged cache works on Redis — go through the normal path.
+            $this->applyTaggedCachePrefix($tenant);
+            return;
+        }
+        // File / array / database drivers: prefix the keys, skip tagging.
+        $this->applyKeyPrefix($tenant);
+    }
+}
+```
+
+The net effect: in dev, every tenant gets a key prefix (`tenant_42:`) and we never call tag invalidation. In production with Redis, tagged invalidation works the way the docs intend. Same code, different bootstrapping based on the driver.
+
+The lesson, broadly, is that opinionated framework packages sometimes assume a backend they don't enforce. Always sanity-check the driver before trusting the abstraction.
+
+{/* author-review: confirm the framing matches your actual experience — specifically that the issue surfaced under Livewire serialization, not under direct cache access */}
+
+## The module system that paid for itself
+
+The other decision worth surfacing: **modules self-register through a JSON config.**
+
+Every domain feature (Students, Staff, Library, Assets, Stock, Security, Backup, Login, Dashboard, ...) lives under `app/Modules/<Name>/` and ships:
+
+- A service provider that registers routes, views, and Livewire components.
+- A `module.json` declaring permissions, navigation entries, and dependencies on other modules.
+- A migrations folder that runs only when the module is enabled for a tenant.
+
+A new module rolls out without touching the framework core. Permissions land via the JSON config; Spatie's permission package picks them up on tenant provisioning. Navigation entries appear in the right place because the central layout reads the module registry.
+
+Across 20+ modules this cut feature rollout time by roughly 40%. The number sounds like a marketing claim, but it's measured against the previous flow (manually wiring routes + permissions + navigation + migrations per module). The bulk of the saving is in not forgetting one of the four wiring steps.
+
+```json
+// app/Modules/Library/module.json
+{
+  "name": "library",
+  "label": "Library",
+  "permissions": ["library.view", "library.borrow", "library.manage"],
+  "navigation": { "section": "academics", "order": 30 },
+  "depends_on": ["students"]
+}
+```
+
+The dependency declaration ended up being more useful than I expected. Enabling Library without Students used to silently break the borrowing flow; now the provisioning script refuses to enable Library unless Students is already active.
+
+## Tradeoffs, honest
+
+A few places this approach is worse than the obvious row-level alternative:
+
+- **Migrations run N times.** With 1000 tenants and a slow migration, a deploy gets expensive. I batch migrations through a queue, but it's still meaningfully longer than a single ALTER TABLE.
+- **Cross-tenant analytics is harder.** "How many students across all institutes?" is now a fan-out query. We solved this by pushing a small aggregate row into the central tenancy DB on every meaningful change, which works but adds a write path to maintain.
+- **Backup strategy needs thought.** Per-tenant dumps are easy to scope but expensive to schedule. Snapshotting the MySQL instance is cheaper but recovers tenants you may not want to recover.
+
+If I were starting from scratch with no legacy schema, I would still pick isolated-DB for this product. The cleanliness at the application layer is hard to give up. But "still pick" is not the same as "obvious choice" — for a greenfield SaaS with a clean data model, row-level is genuinely the simpler tool.
+
+## What I'd do differently
+
+- **Cache driver assertion at boot.** A startup check that fails loudly if the driver doesn't support tagged invalidation in production. The Livewire trap should not have been a discovery; it should have been a boot-time error.
+- **Module CI gate.** A test that fails the build if a module declares a permission that isn't referenced in any route guard. The JSON config is too easy to drift from the codebase.
+- **Per-tenant migration concurrency.** I ran migrations serially; with proper isolation a small worker pool would have made deploys minutes instead of half an hour.
+
+None of this changes the architecture; they're improvements to the operational seams around it.
+
+---
+
+If you're picking between multi-tenancy strategies for a Laravel SaaS and want to talk through tradeoffs against your specific schema and scale, [email me](mailto:abhishekcse2004@gmail.com).

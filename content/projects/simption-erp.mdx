@@ -1,0 +1,46 @@
+---
+title: Simption ERP
+slug: simption-erp
+year: 2025
+order: 1
+summary: A production multi-tenant SaaS ERP for educational institutions — isolated MySQL per tenant, subdomain routing, 20+ self-registering modules, sub-10-minute onboarding.
+stack:
+  - Laravel 13
+  - Livewire 4
+  - MySQL
+  - Redis
+  - stancl/tenancy
+  - Spatie RBAC
+  - AWS S3
+  - Tailwind CSS
+repo: null
+demo: https://collegedemo.simption.com/
+featured: true
+---
+
+## Problem
+
+Educational institutions in India — schools, colleges, coaching centres — run on a chaotic mix of paper, Excel, and disconnected single-purpose tools. Existing SaaS ERPs are either prohibitively expensive (foreign vendors) or rigidly single-tenant (one install per institute, expensive to host, painful to update). SimptionTech needed a multi-tenant ERP that could serve 1000+ institutions from a single deployment, with hard tenant isolation for data safety and a modular structure so domain-specific features (library, transport, attendance) could be added without forking the codebase.
+
+## Architecture
+
+Tenants resolve via subdomain (`<institute>.simption.app`). A custom `TenantResolver` looks up the tenant by host and bootstraps a per-tenant MySQL connection using `stancl/tenancy v3.10`. Each tenant gets an isolated database — no row-level multi-tenancy, no shared tables. A `NoOpDatabaseManager` was fitted on top of `stancl/tenancy` to accommodate a pre-existing legacy schema that pre-dated the multi-tenant migration.
+
+A pluggable module system under `app/Modules/*` lets each domain feature (Students, Staff, Library, Assets, Stock, Security, Backup, Login, Dashboard, ...) ship its own service providers, Eloquent models, routes, Livewire components, and RBAC permissions through a single JSON config. New features land without touching the framework core, cutting feature rollout time by approximately 40%.
+
+## Key engineering decisions
+
+- **Isolated MySQL per tenant.** Row-level multi-tenancy was rejected because the existing data model assumed full schema ownership; carrying that assumption into a shared-DB design would have required rewriting most of the app. Isolated DBs added provisioning complexity but kept every other module simple.
+- **Subdomain routing over path-based.** Subdomains make SSL, branding, and tenant-aware cookies cleaner. The tenant context is established at the router level — application code never has to ask "which tenant is this?"
+- **Tenancy bootstrappers tuned to skip the cache-tag trap.** Laravel 13's file-cache driver doesn't support tags, and tagged invalidation under Livewire serialization is fragile. The cache bootstrapper was made conditional on the active driver — file when developing, Redis when serving real tenants.
+- **RBAC via Spatie + per-module JSON config.** Each module declares its own permissions; a single seeder writes them on tenant provisioning. New permissions ship with the module, not as a separate migration.
+- **Per-tenant configurable image upload pipeline.** Resize/crop presets are stored in the tenant's own settings table, applied by a shared image service backed by AWS S3. School-vs-coaching aspect ratios get picked at upload time, not hardcoded.
+
+## Stack
+
+Laravel 13, Livewire 4, MySQL, Redis, `stancl/tenancy`, Spatie's permission package, AWS S3, Tailwind CSS, Alpine.js, Blade.
+
+## Links
+
+- Live demo: [collegedemo.simption.com](https://collegedemo.simption.com/)
+- Repository: private (company codebase)

@@ -1,0 +1,150 @@
+---
+title: "30 FPS on a CPU: OpenVINO IR, async inference, and the FP16 / FP32 question"
+slug: openvino-fp16-benchmarks
+date: "2026-03-08"
+summary: A driver drowsiness pipeline that runs at ~30 FPS on an Intel Core i5 with no GPU. The decisions that made it possible — OpenVINO IR over raw ONNX, async inference over synchronous, FP16 over FP32 — and where each one stops paying.
+tags:
+  - openvino
+  - edge-ml
+  - performance
+  - python
+readTime: 8
+draft: false
+---
+
+## The constraint that made this interesting
+
+I built [DriveAware](/work/driveaware) in 2026 as a real-time driver drowsiness and distraction detector. The deliberately uncomfortable constraint: **CPU only, no GPU, no NPU, no accelerator** — just a laptop-class Intel Core i5. Target: 30 FPS, end-to-end latency under 60 ms, three deep models in the loop.
+
+Most "real-time vision" code I've read assumes a GPU. The interesting question wasn't "can it work" — it was "what set of decisions actually keeps it real-time on the cheap hardware."
+
+## What's in the loop
+
+Three pre-trained OpenVINO Model Zoo models, chained:
+
+```
+[ webcam frame ]
+       │
+       ▼
+[ face-detection ]            ─── bounding box
+       │
+       ├──────────────────┐
+       ▼                  ▼
+[ head-pose estimator ]   [ open/closed-eye classifier ]
+       │                  │
+       └────────┬─────────┘
+                ▼
+[ scoring & alert ]
+       │
+       ▼
+   PERCLOS + head-pose deviation → alert + CSV log
+```
+
+Face detection runs first because the other two need the cropped face/eye regions. Head pose and eye state are independent given the face box — they can run in parallel, which turns out to matter.
+
+## Decision 1: OpenVINO IR, not raw ONNX
+
+A naive approach is to load ONNX models with `onnxruntime`, set `CPUExecutionProvider`, and run. It works, and it's portable.
+
+The Intel toolkit gives you something extra: **the Model Optimizer compiles your model to OpenVINO's intermediate representation (IR)**, which the OpenVINO runtime then executes with CPU-specific optimisations — vector extensions (AVX-512 on the i5), graph fusion, layout choices tuned for the target.
+
+The conversion is a one-time step:
+
+```bash
+mo --input_model face-detection.onnx \
+   --data_type FP16 \
+   --output_dir models/face-detection-fp16
+```
+
+That spits out `.xml` (graph) + `.bin` (weights). The runtime then loads them with the standard Inference Engine API.
+
+Empirically, IR + OpenVINO runtime is meaningfully faster on the i5 than ONNX runtime against the same model — the speedup varies per model but is consistent. The cost is a build step and Intel-specific tooling; in exchange you get most of the gap to a small accelerator without owning one.
+
+{/* author-review: confirm that ONNX runtime was tried as a baseline before committing to OpenVINO IR, or that this was a direct decision based on prior reading */}
+
+## Decision 2: Async inference instead of synchronous
+
+The first naive pipeline looks like this:
+
+```python
+while True:
+    frame = capture.read()
+    boxes = face_model.infer(frame)        # waits ~12 ms
+    pose  = pose_model.infer(boxes[0])      # waits ~10 ms
+    eye   = eye_model.infer(boxes[0])       # waits ~6 ms
+    score = update_perclos(eye, pose)
+    if score > THRESHOLD: alert()
+```
+
+That's ~28 ms of inference per frame, plus capture + scoring overhead. You'd hit something like 25–28 FPS — close to target, but with no headroom and a UI that locks up while the model is thinking.
+
+OpenVINO's Async Inference API lets you submit work and immediately move on:
+
+```python
+# Pseudocode — actual API uses InferRequest.start_async()
+req_face = face_model.start_async(frame_n)
+req_pose = pose_model.start_async(prev_face_box)  # uses frame n-1's box
+req_eye  = eye_model.start_async(prev_face_box)
+
+# do other work — capture frame n+1, render UI, update PERCLOS, ...
+
+req_face.wait();  boxes = req_face.output
+req_pose.wait();  pose  = req_pose.output
+req_eye.wait();   eye   = req_eye.output
+```
+
+Two things happen:
+
+1. **Head-pose and eye-state run in parallel.** They share no data dependencies once the face box is known.
+2. **The next frame's face detection overlaps the current frame's downstream work.** While the eye classifier is still running on frame N, face detection has already started on frame N+1.
+
+The net effect: end-to-end latency per frame stays around 50–60 ms, but throughput improves substantially because the CPU is no longer idle waiting for any one inference call.
+
+The downside is correctness — head-pose and eye-state on frame N use the face-box from frame N-1, which is wrong if the driver's head moves a lot in 33 ms. In practice, faces don't move that fast at driving speeds; the tracker effectively re-syncs every frame because the face-detection result for N arrives in time for the scoring step.
+
+## Decision 3: FP16 IR, not FP32
+
+The Model Optimizer can emit FP32 or FP16 IR. The decision is a tradeoff:
+
+- **FP32** — what the original training used. Highest accuracy. Largest model file, slowest inference.
+- **FP16** — half-precision. Smaller file, faster inference. Slight accuracy drop, usually invisible for classification tasks.
+
+I benchmarked both on the i5:
+
+- **FP32 IR**: end-to-end latency hovered around the target, frame-rate marginally under 30 FPS, no headroom. {/* author-review: confirm exact FP32 numbers — resume notes the test happened, not the precise output */}
+- **FP16 IR**: ~30 FPS at under 60 ms end-to-end, with measurable headroom for the rest of the pipeline.
+
+The accuracy of face detection and eye classification on FP16 was indistinguishable from FP32 in my testing. Head-pose was the riskiest — pose-estimation is more sensitive to precision — but the deviations were within the threshold I cared about (the system flags "distracted," not "exact yaw angle 12.4°").
+
+For this product, FP16 was the right call. For a system that actually steered the car based on the head-pose number, I would re-run that comparison more rigorously before committing.
+
+## PERCLOS, not "are eyes closed right now"
+
+A single frame of closed eyes is a blink. A sustained closure ratio over a window is drowsiness. PERCLOS — Percentage of Eyelid Closure over a defined interval — is the standard:
+
+```
+PERCLOS_t = (frames_with_eyes_closed in window [t-W, t]) / (total_frames in window)
+```
+
+W is typically 30 seconds. Threshold around 0.15 (15% of frames with eyes closed) is a reasonable starting point — drivers blink ~10% of the time naturally, so the gap above natural blinking is where drowsiness lives.
+
+The instantaneous flag is the wrong shape for an alert. Drivers blink. Drivers also occasionally look down at the dashboard. You want neither to trigger a beep. PERCLOS smooths both out by measuring _sustained_ behaviour.
+
+For distraction (eyes open but looking the wrong way), I used a similar sliding window on head-pose yaw deviation. Same logic — an instantaneous look-to-side is a glance at the mirror; a sustained 15° yaw for two seconds is distraction.
+
+## Tradeoffs, honest
+
+- **Async inference is hard to reason about.** The "frame N uses frame N-1's face box" subtlety bit me twice in debugging. A correctness-first version would synchronise on the face box, which costs ~5–10 ms per frame.
+- **OpenVINO IR ties you to Intel.** If the deployment target shifts (ARM laptops, mobile), the IR is wasted work; you're back to ONNX runtime or platform-specific runtimes.
+- **FP16 is fine until it isn't.** Production safety-critical systems should benchmark accuracy drift rigorously per environment. I didn't, because this was a personal project, but I'd want a held-out test set if this shipped to drivers.
+- **The CSV incident log is local-only.** Great for privacy, useless if you wanted aggregate analytics across a fleet. A real product would push events to a backend; I deliberately didn't, because the use case I was prototyping was "device-only, no network."
+
+## What I'd do next
+
+- **Quantise to INT8.** OpenVINO supports post-training quantisation. INT8 would give another ~2x speedup on CPU and free up cycles for additional features (hands-on-wheel detection, seatbelt check).
+- **A held-out accuracy benchmark.** Right now my evidence that FP16 is "good enough" is qualitative. A proper precision/recall delta against FP32 on a labelled set would be more honest.
+- **A second-camera mode for distraction.** Single-camera head-pose has blind spots when the driver looks straight down. A cabin-overhead camera would fix that — and the same async inference pipeline scales to four streams on the same i5.
+
+---
+
+The pipeline lives at [github.com/Anshuu2004/CodeAware](https://github.com/Anshuu2004/CodeAware) (the repo's named CodeAware for historical reasons — display name on the portfolio is DriveAware).

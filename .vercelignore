@@ -1,0 +1,23 @@
+# Vercel CLI does NOT honor .gitignore for source uploads — list secrets and
+# local-only artifacts here so they never reach the build. data/rag-index.json
+# is intentionally NOT excluded: it must ship for the live agent to work.
+.git
+node_modules
+.next
+.vercel
+
+# secrets / local env (env vars live in the Vercel project settings)
+.env
+.env*.local
+key.txt
+
+# resume source PDFs (kept locally only)
+*.pdf
+
+# skill agents, editor, vendored clones — not part of the deploy
+.agent
+.agents
+.claude
+.vscode
+.idea
+vendor

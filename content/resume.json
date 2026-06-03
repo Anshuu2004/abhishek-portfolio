@@ -1,0 +1,110 @@
+{
+  "name": "Abhishek Choudhary",
+  "headline": "AI-native full-stack engineer",
+  "location": "Bhopal, Madhya Pradesh, India",
+  "email": "abhishekcse2004@gmail.com",
+  "phone": "+91 8305978787",
+  "links": {
+    "github": "https://github.com/Anshuu2004",
+    "linkedin": "https://linkedin.com/in/abhishekcse2004"
+  },
+  "summary": "Computer Science undergraduate and Full-Stack Developer with production experience shipping multi-tenant SaaS platforms and AI-integrated web apps across Next.js, Laravel, and Python. Strong foundation in DSA, OOP, REST APIs, and LLM integration.",
+  "education": [
+    {
+      "school": "University Institute of Technology, RGPV",
+      "degree": "Bachelor of Technology in Computer Science and Engineering",
+      "location": "Bhopal, India",
+      "start": "2023",
+      "end": "2027"
+    },
+    {
+      "school": "Jawaharlal Nehru School",
+      "degree": "Higher Secondary School (12th Grade) — PCM Stream",
+      "location": "Bhopal, India",
+      "start": "2021",
+      "end": "2022"
+    }
+  ],
+  "experience": [
+    {
+      "company": "SimptionTech Pvt Ltd",
+      "role": "Full-Stack Developer",
+      "location": "Bhopal, India",
+      "start": "2025-05",
+      "end": "Present",
+      "bullets": [
+        "Built the core architecture for Simption ERP, a multi-tenant SaaS on Laravel 13 + Livewire 4 designed to serve 1000+ institutions, with an isolated MySQL database per tenant via stancl/tenancy v3.10 and subdomain-based routing; automated provisioning brought institute onboarding to under 10 minutes.",
+        "Implemented a custom TenantResolver and NoOpDatabaseManager fitted to a legacy schema, with middleware enforcing per-tenant status checks (Active/Blocked); tuned tenancy bootstrappers (Database, Queue, conditional Cache) to sidestep Laravel 13 serialization pitfalls and file-cache tag limitations.",
+        "Created a pluggable module system under app/Modules/* covering 20+ modules (Students, Staff, Library, Assets, Stock, Security, Backup, Login, Dashboard, etc.) where each module ships its own service providers, views, models, routes, Livewire components, and RBAC permissions via a JSON config — cutting new-feature rollout time by ~40%.",
+        "Added authentication with 2FA, session-based access control, Spatie-based RBAC, and a cache-prefixed SecurityService working safely under both file and Redis drivers; built a real-time Security dashboard wired to live database metrics.",
+        "Wrote a DB-driven, per-tenant configurable image upload pipeline (resize/crop presets) backed by AWS S3, plus an institute-type-aware layer (school, college, coaching) with dynamic Student Registration."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Simption ERP",
+      "slug": "simption-erp",
+      "year": 2025,
+      "stack": ["Laravel 13", "Livewire 4", "MySQL", "Redis", "stancl/tenancy", "Spatie RBAC", "AWS S3"],
+      "links": { "demo": "https://collegedemo.simption.com/" },
+      "summary": "Multi-tenant SaaS ERP for educational institutions — isolated MySQL per tenant, subdomain routing, 20+ self-registering modules."
+    },
+    {
+      "name": "DriveAware",
+      "slug": "driveaware",
+      "year": 2026,
+      "stack": ["Python", "OpenVINO Toolkit", "OpenVINO Model Zoo", "OpenCV", "NumPy"],
+      "links": { "repo": "https://github.com/Anshuu2004/CodeAware" },
+      "summary": "Real-time driver drowsiness and distraction detection — three OpenVINO models chained via Async Inference API, ~30 FPS at under 60 ms latency on an Intel Core i5 CPU with FP16 IR.",
+      "metrics": {
+        "fps": 30,
+        "latencyMs": 60,
+        "hardware": "Intel Core i5 (no GPU)",
+        "format": "FP16 IR"
+      }
+    },
+    {
+      "name": "CodeHeal",
+      "slug": "codeheal",
+      "year": 2025,
+      "stack": ["React 19", "Node.js", "Express", "Gemini API", "Octokit", "JWT", "AES-256-GCM"],
+      "links": {
+        "repo": "https://github.com/Anshuu2004/codeheal-v2",
+        "demo": "https://codeheal.onrender.com"
+      },
+      "summary": "GitHub OAuth AI agent that detects and auto-fixes bugs (syntax, lint, logic, type) across Python, JS/TS, Go, Ruby, Java, and C++ repos; parallel pipeline analyzes up to 10 files concurrently."
+    },
+    {
+      "name": "AI Question Paper Generator",
+      "slug": "ai-question-paper-generator",
+      "year": 2025,
+      "stack": ["Python", "Flask", "Gemini API", "MySQL", "WeasyPrint", "python-docx", "Docker", "Gunicorn"],
+      "links": {
+        "repo": "https://github.com/Anshuu2004/Ai_Intelligent_Paper_Generator",
+        "demo": "https://api.simption.com/Ai_Intelligent_Paper_Generator/"
+      },
+      "summary": "Flask platform pairing Gemini with a hierarchical question bank (Boards → Classes → Subjects → Chapters) to generate CBSE/ICSE/state-board papers; multi-format export (PDF/Word), bilingual EN/HI, fallback chain Gemini Flash → Pro → 2.0 Flash → local DB."
+    },
+    {
+      "name": "Brosplit",
+      "slug": "brosplit",
+      "year": 2025,
+      "stack": ["Next.js 15", "TypeScript", "Supabase", "Tailwind CSS"],
+      "links": {
+        "repo": "https://github.com/Anshuu2004/BroSplit",
+        "demo": "https://bro-split-two.vercel.app"
+      },
+      "summary": "Multi-currency expense-splitter — Supabase Auth, HTTP-only cookie sessions, 7-day token group invitations, deterministic remainder-split algorithm with creditor-approved repayments, per-currency greedy debt-simplification engine."
+    }
+  ],
+  "skills": {
+    "languages": ["Python", "C++", "Java", "JavaScript", "TypeScript", "PHP", "SQL", "HTML5", "CSS3"],
+    "frameworks": ["Next.js 15", "React 19", "Node.js", "Express", "Laravel 13", "Livewire 4", "Flask", "Tailwind CSS", "Vite", "shadcn/ui", "Alpine.js", "Blade", "Zod", "Vitest"],
+    "databases": ["PostgreSQL (Supabase)", "MySQL", "SQLite", "Redis", "Eloquent ORM"],
+    "developerTools": ["Git", "GitHub", "Docker", "Composer", "npm", "Postman", "VS Code", "GitHub Copilot", "Octokit", "Gunicorn"],
+    "aiTools": ["Claude Code CLI", "Antigravity", "Cursor", "OpenVINO", "Claude Sonnet / Opus", "Gemini", "Gemma", "Llama 3", "n8n", "LangChain", "Hugging Face Transformers"],
+    "aiConcepts": ["Prompt Engineering", "RAG", "Vector Databases", "OAuth-secured AI agents", "LLM API integration", "Multi-agent workflows", "Edge AI inference"],
+    "coreConcepts": ["Data Structures & Algorithms", "OOP", "OAuth", "REST APIs", "Multi-tenant SaaS", "RBAC", "MVC", "Machine Learning Fundamentals"]
+  }
+}

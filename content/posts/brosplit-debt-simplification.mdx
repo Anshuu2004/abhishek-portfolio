@@ -1,0 +1,151 @@
+---
+title: "Per-currency greedy debt simplification: the algorithm behind Brosplit"
+slug: brosplit-debt-simplification
+date: "2026-01-18"
+summary: Why Splitwise's "simplify debts" feature silently re-trades you across currencies — and how Brosplit's per-currency engine avoids it. The greedy max-creditor vs max-debtor matching, the deterministic remainder algorithm, and the creditor-approval state machine.
+tags:
+  - algorithms
+  - typescript
+  - product
+readTime: 7
+draft: false
+---
+
+## The edge case that started this
+
+The classic "split bill" UI does well on the happy path: three friends, one country, one currency, even split, a few hundred rupees. The math is trivial — everyone divides everyone else's expenses, settle at the end.
+
+It falls apart on the edges I actually encountered:
+
+- A group with USD-paying members and INR-paying members. Whose ledger absorbs the exchange-rate drift?
+- A 100-rupee expense split three ways — someone has to absorb the leftover 0.33. Which someone? Does it pick the same person every time, or shuffle?
+- "Settling up" with one tap from the debtor side — is that consent from the creditor, or just an assertion the debtor types into the app?
+
+[Brosplit](/work/brosplit) was an answer to all three. Built in 2025 on Next.js 15 + TypeScript + Supabase. The interesting parts are the two algorithmic cores.
+
+## Algorithm 1: deterministic remainder allocation
+
+A 100-rupee expense divides three ways as 33.33, 33.33, 33.33 — total 99.99, missing one paisa. Somebody has to owe 33.34 instead.
+
+The naïve answer is "whoever the floating-point arithmetic happens to round up." Reproducible-on-the-same-machine, but the bug is silent: re-running the same calculation on a different machine, or in a different language, can shuffle the leftover paisa onto someone else. Users who notice the inconsistency lose trust fast.
+
+Brosplit uses an explicit rule: **sort participants by user ID, give the remainder to the first N**, where N is how many sub-cents need to be reallocated.
+
+```ts
+function splitWithRemainder(
+  totalCents: number,
+  participants: string[],   // user IDs
+): Record<string, number> {
+  const sorted = [...participants].sort();
+  const n = sorted.length;
+  const base = Math.floor(totalCents / n);
+  const remainder = totalCents - base * n;
+
+  const result: Record<string, number> = {};
+  for (let i = 0; i < n; i++) {
+    result[sorted[i]] = base + (i < remainder ? 1 : 0);
+  }
+  return result;
+}
+```
+
+Three properties matter:
+
+1. **Deterministic.** Same input → identical output. Always.
+2. **Stable across re-runs.** The same user gets the same allocation if the participant set is unchanged.
+3. **Fair over time.** If "user_a" always gets sorted first, they consistently absorb the remainder. The fix is to randomise the sort key per expense — for example, sort by `hash(expense_id || user_id)` — so the absorbing user rotates across expenses without losing determinism within a single expense.
+
+The current implementation sorts by user ID directly. The trade-off is reproducibility today vs. fairness over time. Worth revisiting if a group has a heavy-remainder pattern; for typical use this hasn't been a problem.
+
+## Algorithm 2: per-currency greedy debt simplification
+
+This is the one that gets Splitwise wrong.
+
+The problem statement: given a set of pairwise debts between N people, find the minimum set of payments that settles all balances.
+
+The textbook greedy approach:
+
+```
+1. Compute net balance per person (sum of credits − sum of debits).
+2. Sort: positive balances are "creditors," negative are "debtors."
+3. While both sets non-empty:
+     a. Take the max creditor and max debtor.
+     b. Match them — debtor pays creditor the smaller absolute value.
+     c. Remove whichever balance hit zero.
+4. The remaining payments are the simplified set.
+```
+
+This works perfectly in a single currency. The number of transactions drops dramatically: a 10-person group with 30 expenses might collapse to 5 settlements instead of 30.
+
+Now introduce currencies. Person A is owed $50 USD; person B owes ₹4000 INR. Should the simplification merge them by converting INR to USD at "today's rate"? Splitwise does. Brosplit refuses.
+
+The reason is consent. If the simplification converts ₹4000 to $48 at today's rate and books the debt as $48, the user has just been silently traded at a rate they did not approve. Tomorrow's rate makes them poorer or richer than they expected — but the trade has already happened, in the app, without a confirmation step.
+
+Brosplit's answer: **run the greedy simplification once per currency**. The USD ledger settles in USD. The INR ledger settles in INR. People who are net-creditor in one and net-debtor in another receive and pay separately, in the original currency.
+
+```ts
+function simplifyByCurrency(
+  expenses: Expense[],
+): Map<Currency, Settlement[]> {
+  const buckets = groupBy(expenses, (e) => e.currency);
+  const settlements = new Map<Currency, Settlement[]>();
+
+  for (const [currency, currencyExpenses] of buckets) {
+    const balances = computeBalances(currencyExpenses);
+    settlements.set(currency, greedySimplify(balances));
+  }
+  return settlements;
+}
+```
+
+The output is _more_ settlements than a cross-currency merge would produce. That's the correct tradeoff: a few extra notifications, zero silent currency conversion.
+
+## Algorithm 3 (kind of): creditor-approved repayments
+
+This isn't an algorithm; it's a state machine. The reason it goes here is that it solves a real bug in every expense app I'd used.
+
+The bug: the debtor taps "settle up," the UI marks the debt cleared, the creditor finds out later (or never). The debtor's record says paid, the creditor's says nothing happened. They argue at the next group dinner.
+
+Brosplit models the repayment as a two-step:
+
+```
+[ debtor proposes ]   ─►   [ pending creditor approval ]
+                                      │
+                       creditor accepts │
+                                      ▼
+                              [ settled ]
+
+           creditor rejects ─►  [ disputed ]
+                                      │
+                                      ▼
+                              [ back to "owed" ]
+```
+
+The creditor gets a realtime notification (Supabase realtime fanout) the moment a debtor proposes a settlement. The settlement isn't applied to the ledger until the creditor taps "Got it." A reject moves the debt back to "owed" with a comment thread attached.
+
+The UI overhead is one extra tap for the creditor. The dispute-prevention payoff is large.
+
+## Edge cases the algorithms don't solve
+
+These are the cases I either kicked down the road or hand-wrote a UI for:
+
+- **Cyclical debts under floating-point.** If A → B → C → A in the same currency, greedy simplification can leave a small floating residue. Brosplit handles this by working in integer cents/paise throughout the algorithm — never floats.
+- **Group membership changes mid-expense.** Someone leaves a group while owed money. Brosplit freezes the leaving user's outstanding balance; the algorithm runs on the frozen set.
+- **Cross-currency intentional swaps.** A user actively wants to settle their INR debt by paying USD. This is genuinely useful but requires a conscious "swap" UI with an explicit rate. Not implemented; deliberately left out of v1 because the moment you add it, half the users misuse it.
+
+## Tradeoffs, honest
+
+- **Per-currency simplification produces more settlements than a cross-currency merge would.** That's fine, but it's a deliberate UX cost. Users coming from Splitwise sometimes ask "why didn't this collapse to fewer?" The answer is consent; the UI explains it in a small footer.
+- **Creditor approval adds friction.** It's one extra tap and one extra notification. The cost is real. In testing, a small fraction of users complained about the extra step; the larger fraction (those who had previously had a "did you pay me?" dispute) loved it.
+- **Deterministic remainder by sorted user ID is unfair over time.** A group whose user IDs sort consistently will pile the remainder on the same person. The fix is a per-expense rotation, easy to add, not yet shipped.
+- **The greedy simplification is not provably optimal.** It produces a small number of transactions, but not always the minimum. Optimal multi-party settlement is NP-hard in the general case; greedy is the standard practical compromise.
+
+## What I'd add next
+
+- **Per-expense remainder rotation** (the fix mentioned above) — small change, real improvement to long-run fairness.
+- **An audit log on each settlement.** Right now the state-machine transitions are stored but not surfaced to the user. A "this settlement was proposed by A on date X, accepted by B on date Y" record in the UI would close the trust loop.
+- **Receipts.** Photographing a paper bill and attaching it to the expense. Useful in groups where one person paid the actual store and the others trust them less than the app.
+
+---
+
+[Live demo](https://bro-split-two.vercel.app) · [Repo](https://github.com/Anshuu2004/BroSplit). The math is small; the product decisions around it took longer than the code.

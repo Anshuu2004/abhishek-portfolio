@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Color tokens — HSL component triplets (consumed via hsl(var(--token))) */
+    --background: 222 14% 7%;
+    --foreground: 0 0% 96%;
+    --muted: 220 12% 12%;
+    --muted-foreground: 220 8% 64%;
+    --border: 220 10% 16%;
+    --accent: 18 91% 58%;
+    --accent-foreground: 20 80% 6%;
+    --ring: 18 91% 58%;
+
+    /* Geometry */
+    --radius: 0.625rem;
+
+    /* Spacing (used directly via var() — tokens, not Tailwind utilities) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 40px;
+    --space-2xl: 64px;
+    --space-3xl: 96px;
+
+    /* Motion */
+    --motion-fast: 120ms;
+    --motion-base: 220ms;
+    --motion-slow: 420ms;
+    --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  /* Reduced-motion: kill all transitions and animations */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}

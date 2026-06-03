@@ -1,0 +1,49 @@
+---
+title: DriveAware
+slug: driveaware
+year: 2026
+order: 3
+summary: Real-time driver drowsiness and distraction detection — three OpenVINO Model Zoo models chained via Async Inference, hitting ~30 FPS at under 60 ms latency on a CPU-only Intel Core i5.
+stack:
+  - Python
+  - OpenVINO Toolkit
+  - OpenVINO Model Zoo
+  - OpenCV
+  - NumPy
+  - PERCLOS
+repo: https://github.com/Anshuu2004/CodeAware
+featured: true
+---
+
+## Problem
+
+{/* author-review: confirm the motivation framing is accurate to your build process */}
+
+Most published driver-drowsiness systems lean on GPUs or dedicated accelerators. The more interesting question is whether the same task runs at real-time framerates on a commodity laptop CPU. DriveAware was built to answer that, against a target of 30 FPS at under 60 ms end-to-end latency on an Intel Core i5 with no GPU.
+
+## Architecture
+
+Three pre-trained OpenVINO Model Zoo models are chained through the OpenVINO Async Inference API so the CPU stays busy during the next frame's inference rather than blocking:
+
+1. **Face detection** — bounding box for every face in the frame.
+2. **Head-pose estimation** — yaw / pitch / roll for the primary face.
+3. **Open / closed eye classification** — run on each eye region.
+
+PERCLOS (percentage of eyelid closure over a sliding window) feeds drowsiness scoring; sustained head-pose deviations flag distraction. Both states trigger an audible alert and a CSV log entry with a timestamp.
+
+## Key engineering decisions
+
+- **OpenVINO IR over PyTorch / ONNX direct.** The Intel toolkit compiles models to IR formats (FP32, FP16) tuned for the CPU's vector extensions, with meaningful speedups on commodity hardware.
+- **FP16 IR for the hot path.** Benchmarking on the i5 (no GPU) with FP16 hit the ~30 FPS target at under 60 ms end-to-end. FP32 was tested side-by-side as the reference. {/* author-review: confirm whether FP32 came in under target */}
+- **Async Inference API instead of synchronous calls.** Synchronous calls leave the CPU idle while inference runs. Async chaining hides that latency by starting the next frame before the current one finishes.
+- **PERCLOS over instantaneous closed-eye detection.** A single frame of closed eyes is a blink; a sustained closure ratio over a window is drowsiness. PERCLOS encodes the distinction directly.
+- **Local CSV incident log.** The whole pipeline runs offline — no network round-trip, no cloud dependency.
+
+## Stack
+
+Python 3, OpenVINO Toolkit, OpenVINO Model Zoo (three pre-trained models), OpenCV for capture and overlay, NumPy.
+
+## Links
+
+- Repository: [github.com/Anshuu2004/CodeAware](https://github.com/Anshuu2004/CodeAware) (display name: DriveAware)
+- Live demo: not yet — runs locally against a webcam

@@ -1,0 +1,57 @@
+{
+  "$schema": "FAQ matcher fallback responses. Used when GEMINI_API_KEY is missing or the live model rate-limits. Each entry has a regex `match` against the user question and a canned answer with source slugs.",
+  "entries": [
+    {
+      "match": "(simption|erp|multi-?tenant|laravel|livewire|saas)",
+      "answer": "Simption ERP is the multi-tenant SaaS Abhishek built at SimptionTech using Laravel 13 + Livewire 4. It serves 1000+ institutions with an isolated MySQL database per tenant via stancl/tenancy and subdomain-based routing. Automated provisioning cuts institute onboarding to under 10 minutes, and the pluggable module system (20+ modules) speeds up feature rollout by about 40%.",
+      "sources": ["projects/simption-erp", "resume.experience"]
+    },
+    {
+      "match": "(openvino|driveaware|drowsy|fps|edge|inference)",
+      "answer": "DriveAware (2026) is Abhishek's real-time driver drowsiness and distraction detection pipeline. He chained three OpenVINO Model Zoo models — face detection, head-pose estimation, and open/closed-eye classification — through OpenVINO's Async Inference API so the CPU stays busy during the next frame's inference. With FP16 IR on an Intel Core i5 with no GPU, it hits roughly 30 FPS at under 60 ms end-to-end latency. PERCLOS scoring drives drowsiness alerts; head-pose deviations drive distraction flags.",
+      "sources": ["projects/driveaware", "resume.projects"]
+    },
+    {
+      "match": "(codeheal|code\\s*heal|github|octokit|auto-?fix|bug)",
+      "answer": "CodeHeal is Abhishek's GitHub OAuth AI agent for detecting and auto-fixing bugs across six languages (Python, JS/TS, Go, Ruby, Java, C++). Stack: React 19, Node.js, Express, Gemini API, Octokit. The parallel pipeline analyzes up to 10 files concurrently; fixes commit to a new branch rather than touching main. Auth is hardened with JWT sessions, AES-256-GCM token encryption, Helmet, rate limiting, and timing-safe comparisons.",
+      "sources": ["projects/codeheal", "resume.projects"]
+    },
+    {
+      "match": "(question paper|qp\\s*gen|flask|cbse|icse|exam)",
+      "answer": "The AI Question Paper Generator is a Flask + Gemini platform Abhishek built in 2025. A hierarchical question bank (Boards → Classes → Subjects → Chapters) lives in MySQL and feeds prompt construction. Output: PDF via WeasyPrint and Word via python-docx, with bilingual English/Hindi support (Noto Sans Devanagari). A fallback chain — Gemini Flash → Pro → 2.0 Flash → local DB → placeholder — ensures the paper still generates even if the primary model fails.",
+      "sources": ["projects/ai-question-paper-generator"]
+    },
+    {
+      "match": "(brosplit|bro\\s*split|expense|currency|debt|split)",
+      "answer": "Brosplit is Abhishek's multi-currency expense splitter built with Next.js 15, TypeScript, and Supabase. Two algorithmic cores: a deterministic remainder-split (re-runs produce identical splits) and a per-currency greedy debt-simplification engine using max-creditor vs max-debtor matching. Repayments require creditor approval to prevent the 'I paid you back, didn't I?' dispute pattern. Realtime fanout via Supabase on every expense addition.",
+      "sources": ["projects/brosplit"]
+    },
+    {
+      "match": "(stack|tech|language|frameworks?|tools?)",
+      "answer": "Abhishek's primary stack: Next.js 15 + React 19 + TypeScript on the frontend, Laravel 13 + Livewire 4 + Node/Express on the backend, Python + Flask for AI-heavy services. Databases: PostgreSQL (Supabase), MySQL, Redis. AI: Gemini API, Claude API, RAG, vector DBs, OpenVINO for edge ML. Daily tools: Claude Code CLI, Antigravity, Cursor, Docker, Vitest, shadcn/ui.",
+      "sources": ["resume.skills"]
+    },
+    {
+      "match": "(education|college|university|degree|study)",
+      "answer": "Abhishek is a 3rd-year Computer Science undergraduate at University Institute of Technology, RGPV in Bhopal, India (2023–2027 cohort). Before that, he completed his Higher Secondary (12th, PCM stream) at Jawaharlal Nehru School, Bhopal (2021–2022).",
+      "sources": ["resume.education"]
+    },
+    {
+      "match": "(hire|available|sde|role|intern|job|work\\s+for|opportunit)",
+      "answer": "Abhishek is currently available for SDE internship and full-time roles, with a particular interest in foreign (US/EU) positions. He's currently working as Full-Stack Developer at SimptionTech in Bhopal, shipping production multi-tenant SaaS. For role-specific conversations, email him directly at abhishekcse2004@gmail.com.",
+      "sources": ["resume.summary"]
+    },
+    {
+      "match": "(writing|post|article|blog|read|deep\\s*dive)",
+      "answer": "Abhishek has published four deep technical posts on /writing — a multi-tenant Laravel deep-dive with the Livewire cache-tag trap, an OpenVINO FP16 vs FP32 benchmark write-up, a CodeHeal RAG pipeline + security model post, and a Brosplit per-currency debt-simplification algorithm explainer. Each is ~1500–2000 words, grounded in real production work.",
+      "sources": ["posts/multi-tenant-laravel-13", "posts/openvino-fp16-benchmarks", "posts/codeheal-rag-pipeline", "posts/brosplit-debt-simplification"]
+    },
+    {
+      "match": "(architecture|design|system|diagram)",
+      "answer": "Architecture diagrams live on each project's case study page — hand-tuned inline SVG showing the system layout (multi-tenant flow for Simption ERP, parallel Gemini analysis for CodeHeal, three-model OpenVINO chain for DriveAware, fallback chain for AI QP Gen, per-currency split engine for Brosplit). Each diagram highlights the critical-path node in the site's amber accent.",
+      "sources": ["projects/simption-erp", "projects/codeheal", "projects/driveaware"]
+    }
+  ],
+  "demoDefault": "Demo mode — this agent currently runs on a small set of canned responses about Abhishek's flagship work. To enable the full Gemini-powered RAG agent, set GEMINI_API_KEY and run `npm run rag:build`. Try asking about: Simption ERP, OpenVINO, CodeHeal, the AI Question Paper Generator, Brosplit, his stack, his education, or his availability.",
+  "refusal": "I'm Abhishek's portfolio agent — I only answer questions about his work. Try asking about a project, his stack, or his current role."
+}

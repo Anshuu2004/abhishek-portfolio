@@ -1,0 +1,161 @@
+---
+title: "An AI agent that auto-fixes bugs: CodeHeal's pipeline, the security model, and what 'parallel' means in practice"
+slug: codeheal-rag-pipeline
+date: "2026-02-14"
+summary: How CodeHeal — a GitHub OAuth agent that detects and patches bugs across six languages — actually does it. The 10-files-at-a-time parallel pipeline, the token-encryption story (AES-256-GCM + timing-safe comparison), and the deliberate choice never to commit to main.
+tags:
+  - ai-agents
+  - gemini
+  - security
+  - architecture
+readTime: 8
+draft: false
+---
+
+## Why "auto-fix bugs with AI" usually fails
+
+The pitch is irresistible: log into a repo, point at a file, watch an LLM patch the bug. The reality of most demos is that they work on hand-picked examples and fall over on real code — wrong fix, wrong scope, hallucinated APIs.
+
+[CodeHeal](/work/codeheal) was an attempt to ship the real version. Built in 2025 on React 19 + Node + Express + Gemini + Octokit. Six languages supported. The interesting parts are the boring ones: the security model, the parallel pipeline shape, and a hard constraint that the agent never commits to main.
+
+## The flow, end to end
+
+```
+[user] ── GitHub OAuth ──► [CodeHeal server]
+                              │
+                              │   JWT session cookie
+                              │   AES-256-GCM(access_token)
+                              ▼
+                          [repo picker]
+                              │
+                              ▼
+                          [select files (up to N)]
+                              │
+                              ▼
+         ┌────────────────────┴───────────────────┐
+         │   Parallel pipeline (max 10 in flight) │
+         │   ┌─────────┐  ┌─────────┐  ┌────────┐ │
+         │   │ Gemini  │  │ Gemini  │  │ Gemini │ │
+         │   │ file 1  │  │ file 2  │  │ file 3 │ │
+         │   └────┬────┘  └────┬────┘  └────┬───┘ │
+         │        │            │            │     │
+         └────────┼────────────┼────────────┼─────┘
+                  ▼            ▼            ▼
+                [patch generator + sanity check]
+                              │
+                              ▼
+                  [Octokit → new branch, never main]
+                              │
+                              ▼
+                      [human reviews PR]
+```
+
+The flow is deliberately conservative: the agent does the mechanical work (detection, patch generation, branching) and stops short of merging. Humans review.
+
+## The security part nobody writes about
+
+The honest reason most "AI code tool" demos can't be installed at a real company: the OAuth token they hold has god-mode access to the user's repos. Lose that token and the worst case is catastrophic.
+
+CodeHeal's stack here:
+
+- **GitHub OAuth.** Standard authorization-code flow. The access token never reaches the client.
+- **JWT session cookie.** HTTP-only, SameSite=Lax. Signed, with a short expiry. The cookie has no access token — just a session id.
+- **AES-256-GCM on the access token.** The token is encrypted with a server-side key derived from the session id and stored in a database row keyed by session id. Decrypted in memory only when needed for an API call to GitHub.
+- **Timing-safe comparison on session lookups.** `crypto.timingSafeEqual` rather than `===`. Stops the timing-attack class on session validation. The performance cost is negligible; the bug it prevents is not.
+- **Helmet + express-rate-limit.** The standard Node hardening pair — content-security headers from Helmet, request budgeting from the rate limiter. Default-deny on framing.
+
+The result is that a stolen session cookie gets the attacker into the app, but not into GitHub. The decryption key never leaves server memory; without it the encrypted token in the DB is opaque.
+
+{/* author-review: confirm the key derivation strategy matches what you actually implemented — I'm describing the common pattern; you may have used a different KDF or rotation policy */}
+
+## The parallel pipeline: what "10 files concurrently" actually buys you
+
+Naïvely you'd analyse files one at a time. For a 50-file repo, that's 50 sequential LLM round-trips — each maybe 2-4 seconds — so 2-4 minutes wall-clock. Unacceptable for a UI that's meant to feel responsive.
+
+Unbounded parallelism is the other extreme: launch all 50 requests, return when the slowest finishes. Sounds great until you hit Gemini's rate limit and start eating 429 retries.
+
+CodeHeal lands in the middle: **a worker pool with concurrency 10**. Conceptually:
+
+```js
+async function analyzeFiles(files) {
+  const queue = [...files];
+  const inFlight = new Set();
+  const results = [];
+
+  async function worker() {
+    while (queue.length) {
+      const file = queue.shift();
+      const promise = analyzeOne(file);
+      inFlight.add(promise);
+      promise.then(r => {
+        results.push(r);
+        inFlight.delete(promise);
+      });
+      await promise;
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: 10 }, worker)
+  );
+  return results;
+}
+```
+
+The number 10 isn't theoretical. It came from running the same 50-file analysis at concurrency 1, 5, 10, 20, 50 and watching where wall-clock stopped improving. At 10 the Gemini API was running at near-saturation without throwing 429s; at 20 the 429 rate climbed and net throughput dropped.
+
+The lesson, broadly, is that concurrency limits should be calibrated per-API, per-key, per-time-of-day. Hardcoding 10 is fine as a v1 but a real product would adapt based on observed 429 rate.
+
+## Why the agent never commits to main
+
+The single rule that matters most: **patches go to a new branch, never main**.
+
+The reason is obvious in hindsight: an LLM that's right 95% of the time, committing directly to main on a 50-file analysis, breaks the build on roughly 2.5 files. The blast radius compounds.
+
+A branch + PR model contains the failure. The author of the PR is the agent; the reviewer is the human. Bad patches get caught at review. Good patches go through the team's normal merge process — CI runs, reviewers comment, the deploy pipeline applies.
+
+The interesting side effect is that the agent becomes a useful _author_ in the team's process even when its patches aren't merged. A close-but-wrong fix is still a 90% draft; the reviewer can correct the last 10% in the same PR. Net win.
+
+## What the prompt looks like (compressed)
+
+The prompt structure for each file analysis is roughly:
+
+```
+SYSTEM
+You are CodeHeal — a code-fix agent. You receive one file and
+return either no-op or a structured patch.
+
+For each issue found, output one block:
+ISSUE: <syntax | lint | logic | type | indentation>
+LINE:  <line number>
+DIAG:  <one-line description>
+PATCH: <unified diff snippet>
+
+If no issues, output exactly:
+NO_ISSUES
+
+USER
+language: typescript
+filename: src/auth.ts
+contents:
+<file contents>
+```
+
+Structured output makes parsing trivial — line-by-line, classify, route to the patch generator. The cost is that the LLM occasionally returns a near-miss to the format; the parser has to be tolerant of "PATCH:" arriving as "patch:" with extra whitespace.
+
+## Tradeoffs, honest
+
+- **Six languages is a lot.** Each language has its own idiom for "good fix" — JavaScript's prefer-const vs Python's snake_case-from-camelCase isn't the same kind of issue. The detection prompt is generic, which means it's better at universal bugs (off-by-one, null-deref) and worse at idiom-specific lint (Python's `is None` vs `== None`).
+- **Parallelism breaks file-level dependencies.** If file A imports a symbol from file B and the agent renames the symbol in B, the change to A may go to a different worker and arrive moments later. A real product needs an analysis pass that builds a dependency graph and serialises edits within a connected component.
+- **AES-256-GCM is over-engineering for a side project, and the right answer for a real one.** I built the security model assuming this would be used on real org repos. For a personal side project, an HTTPS-only cookie with a server-rotating signing key would have been enough. I built it the bigger way because if the model is "AI agent touches user code," the security model should not be the weak link.
+- **Branch-per-run produces clutter.** A long-running CodeHeal user accumulates a forest of "codeheal-fix-2025-12-..." branches. The product needs a janitor — a "close all my agent branches older than X" sweep.
+
+## What I'd build next
+
+- **A confidence score on each patch.** Right now every detected issue is treated equally. Real reviewers care about the distinction between "definite syntax error" and "stylistic suggestion." A confidence number from the LLM, plus a UI filter that defaults to high-confidence only, would cut reviewer fatigue.
+- **A "explain the fix" mode.** The patch is the artifact; the reasoning is what the reviewer needs to evaluate. Right now CodeHeal hands over the diff and trusts the reviewer to read it. A short LLM-generated explanation alongside each patch would close that loop.
+- **Multi-file refactor mode.** The current pipeline is one-file-in, one-file-out. Symbol renames, signature changes, and dependency-graph-aware edits would unlock a different class of usefulness.
+
+---
+
+[Live demo](https://codeheal.onrender.com) · [Repo](https://github.com/Anshuu2004/codeheal-v2). Worth poking at if you're building AI dev tools — the boring parts (security, concurrency, branch model) are where I learned the most.

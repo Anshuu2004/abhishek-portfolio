@@ -1,0 +1,46 @@
+---
+title: CodeHeal
+slug: codeheal
+year: 2025
+order: 2
+summary: A GitHub OAuth AI agent that detects and auto-fixes bugs across six languages using Gemini, committing patches to a new branch via Octokit.
+stack:
+  - React 19
+  - Node.js
+  - Express
+  - Gemini API
+  - Octokit
+  - JWT
+  - AES-256-GCM
+repo: https://github.com/Anshuu2004/codeheal-v2
+demo: https://codeheal.onrender.com
+featured: true
+---
+
+## Problem
+
+{/* author-review: confirm framing matches your actual motivation */}
+
+Code review burdens scale with team size and codebase age. A meaningful share of PRs surface the same routine issues — missing null guards, lint violations, indentation drift, simple type errors — that an LLM could fix mechanically if it had structured access to the repository. CodeHeal was an experiment in giving an AI agent exactly that access: log in with GitHub, point at a repo, let the agent flag and patch routine bugs.
+
+## Architecture
+
+Auth flow: GitHub OAuth → JWT session → access token encrypted at rest with AES-256-GCM, compared in constant time on every request. The dashboard lets the user select a repository. A parallel pipeline analyzes up to 10 files concurrently — each file goes through Gemini for issue detection (syntax, lint, logic, type), then a proposed fix. Approved patches are committed to a new branch via Octokit, ready for the user to review and merge.
+
+Languages supported: Python, JavaScript, TypeScript, Go, Ruby, Java, C++.
+
+## Key engineering decisions
+
+- **Parallel pipeline capped at 10 files.** Single-file analysis was too slow; unbounded concurrency stresses the Gemini quota. Ten was the practical ceiling.
+- **Patches go to a new branch, never main.** The agent does not pretend to be a human reviewer — it surfaces work for one.
+- **AES-256-GCM encryption + timing-safe comparison on the OAuth token.** GitHub tokens are catastrophic to leak; encryption at rest plus constant-time comparison closes the obvious exfiltration paths.
+- **Helmet + rate limiting on every endpoint.** Standard hardening for any Node service exposed to the internet.
+
+## Stack
+
+React 19 (frontend), Node.js + Express (backend), Gemini API for analysis, Octokit for GitHub interaction, JWT for sessions, AES-256-GCM for token encryption, Helmet and rate limiting for hardening.
+
+## Links
+
+- Live demo: [codeheal.onrender.com](https://codeheal.onrender.com)
+- Repository: [github.com/Anshuu2004/codeheal-v2](https://github.com/Anshuu2004/codeheal-v2)

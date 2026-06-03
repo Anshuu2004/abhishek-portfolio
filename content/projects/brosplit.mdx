@@ -1,0 +1,48 @@
+---
+title: Brosplit
+slug: brosplit
+year: 2025
+order: 5
+summary: A multi-currency expense splitter with a deterministic remainder algorithm, creditor-approved repayments, and per-currency greedy debt simplification.
+stack:
+  - Next.js 15
+  - TypeScript
+  - Supabase
+  - Tailwind CSS
+repo: https://github.com/Anshuu2004/BroSplit
+demo: https://bro-split-two.vercel.app
+featured: false
+---
+
+## Problem
+
+{/* author-review: confirm the edge-case framing — Splitwise-vs-Brosplit positioning */}
+
+Group expense apps (Splitwise et al.) handle the happy path well but fall down on the edges — one currency only, leftover paise / cent disappear into rounding errors, settlement is one-sided ("I paid for you, you owe me, the end"). Brosplit handles the messy version of the problem: groups that span currencies, splits that don't divide evenly, and repayments that need the creditor's blessing.
+
+## Architecture
+
+Next.js 15 frontend with Supabase Auth using HTTP-only cookie sessions and 7-day token-based group invitations. The split-calculation engine operates **per currency** so a USD trip and an INR dinner stay separate ledgers.
+
+Two algorithmic cores:
+
+1. **Deterministic remainder-split.** When a 100-rupee expense divides three ways, someone has to absorb the extra 0.33. The algorithm assigns the remainder deterministically (by sorted user identifier) so a re-run produces identical splits.
+2. **Greedy debt simplification (per currency).** Max-creditor vs max-debtor matching reduces the total number of transactions in a group. Per-currency means a USD net-creditor doesn't get auto-paid out of an INR pool.
+
+Repayments require creditor approval — the debtor proposes a settlement, the creditor accepts. Both sides see the same notification stream via Supabase realtime.
+
+## Key engineering decisions
+
+- **Per-currency debt simplification, never mixed-currency.** A simplification across currencies would silently re-trade users at exchange rates they did not consent to. Each currency stays isolated.
+- **Creditor-approved repayments.** Prevents the "I paid you back, didn't I?" dispute pattern with an explicit state-machine acceptance step.
+- **HTTP-only cookies, not localStorage.** Sessions stay XSS-resistant.
+- **Realtime fanout on each expense addition.** Participants see updates without a page refresh.
+
+## Stack
+
+Next.js 15 with TypeScript, Supabase (Auth, Realtime, Postgres), Tailwind CSS.
+
+## Links
+
+- Live demo: [bro-split-two.vercel.app](https://bro-split-two.vercel.app)
+- Repository: [github.com/Anshuu2004/BroSplit](https://github.com/Anshuu2004/BroSplit)
