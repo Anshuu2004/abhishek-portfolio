@@ -6,6 +6,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { CommandMenu } from "@/components/command-menu";
+import { ResumeButton } from "@/components/hero/ResumeButton";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -70,6 +71,7 @@ export function Header() {
             aria-hidden
             className="mx-1 hidden h-4 w-px bg-border/60 sm:block"
           />
+          <ResumeButton variant="nav" />
           <CommandMenu />
         </nav>
       </div>

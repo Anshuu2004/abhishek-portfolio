@@ -13,6 +13,8 @@ export const SITE = {
   email: "abhishekcse2004@gmail.com",
   github: "https://github.com/Anshuu2004",
   linkedin: "https://linkedin.com/in/abhishekcse2004",
+  /** Served from /public — direct download, no external dependency. */
+  resume: "/Abhishek_Choudhary_Resume.pdf",
   location: {
     city: "Bhopal",
     region: "Madhya Pradesh",

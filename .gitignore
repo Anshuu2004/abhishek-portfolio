@@ -60,8 +60,12 @@ yarn-error.log*
 .agents/
 .claude/
 
-# resume source PDFs (kept locally, not deployed)
+# resume source PDFs (kept locally, not deployed) — except the one served
+# from /public, which must ship so the download button works in production.
 *.pdf
+!public/*.pdf
 
 # user-pasted secrets (never commit)
 key.txt
+
+.vercel

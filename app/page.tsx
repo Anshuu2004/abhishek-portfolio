@@ -9,6 +9,7 @@ import { DotGrid } from "@/components/decoration/DotGrid";
 import { HeroAmbient } from "@/components/decoration/HeroAmbient";
 import { AskMyPortfolio } from "@/components/hero/AskMyPortfolio";
 import { AvailabilityPill } from "@/components/hero/AvailabilityPill";
+import { ResumeButton } from "@/components/hero/ResumeButton";
 import { StackRibbon } from "@/components/hero/StackRibbon";
 
 export default function HomePage() {
@@ -48,6 +49,9 @@ export default function HomePage() {
             <Button asChild variant="outline" size="lg">
               <Link href="/about">About me</Link>
             </Button>
+            <MagneticButton>
+              <ResumeButton variant="hero" />
+            </MagneticButton>
           </div>
         </FadeUp>
 

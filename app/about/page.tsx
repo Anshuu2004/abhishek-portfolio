@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { FadeUp } from "@/components/motion/FadeUp";
+import { ResumeButton } from "@/components/hero/ResumeButton";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
@@ -109,7 +111,15 @@ export default function AboutPage() {
             What I'm optimising for: SDE roles where the engineering bar is
             high, the stack is modern, and there's real product behind the
             problems. India or international. Most of what I&apos;ve built so
-            far is on the resume{/* author-review: optionally link a hosted PDF here once Issue #13's OG flow is decided */}, and the rest is on this site.
+            far is on the{" "}
+            <a
+              href={SITE.resume}
+              download
+              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+            >
+              résumé
+            </a>
+            , and the rest is on this site.
           </p>
         </div>
       </FadeUp>
@@ -195,6 +205,9 @@ export default function AboutPage() {
             </a>
             .
           </p>
+          <div className="pt-1">
+            <ResumeButton variant="hero" />
+          </div>
         </section>
       </FadeUp>
     </section>

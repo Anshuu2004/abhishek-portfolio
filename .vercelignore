@@ -11,8 +11,10 @@ node_modules
 .env*.local
 key.txt
 
-# resume source PDFs (kept locally only)
+# resume source PDFs (kept locally only) — except the /public copy, which the
+# résumé download button serves in production.
 *.pdf
+!public/*.pdf
 
 # skill agents, editor, vendored clones — not part of the deploy
 .agent
