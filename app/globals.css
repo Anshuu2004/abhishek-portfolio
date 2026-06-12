@@ -5,10 +5,11 @@
 @layer base {
   :root {
     /* Color tokens — HSL component triplets (consumed via hsl(var(--token))) */
-    --background: 222 14% 7%;
+    --background: 222 16% 6%;
     --foreground: 0 0% 96%;
     --muted: 220 12% 12%;
     --muted-foreground: 220 8% 64%;
+    --surface: 221 13% 9%;
     --border: 220 10% 16%;
     --accent: 18 91% 58%;
     --accent-foreground: 20 80% 6%;
@@ -47,6 +48,25 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Full-bleed sections use w-screen wrappers; clip the sliver of
+       horizontal overflow the scrollbar gutter would otherwise create. */
+    overflow-x: clip;
+  }
+
+  /* Thin dark scrollbar — the default chrome scrollbar breaks the frame. */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 5px;
+    border: 2px solid hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 
   ::selection {

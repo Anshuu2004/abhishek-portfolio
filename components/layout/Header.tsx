@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { CommandMenu } from "@/components/command-menu";
@@ -19,9 +19,39 @@ const NAV_LINKS = [
 export function Header() {
   const pathname = usePathname();
   const [logoHovered, setLogoHovered] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // Recede while scrolling down, return on the first upward scroll — keeps
+  // the cinematic frame clean mid-read but navigation always one flick away.
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        const delta = y - lastY;
+        if (y < 80) setHidden(false);
+        else if (delta > 6) setHidden(true);
+        else if (delta < -6) setHidden(false);
+        lastY = y;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b border-border/60 bg-background/70 backdrop-blur transition-transform duration-slow ease supports-[backdrop-filter]:bg-background/50",
+        hidden && "-translate-y-full"
+      )}
+    >
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
         <Link
           href="/"

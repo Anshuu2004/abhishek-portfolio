@@ -10,11 +10,12 @@ const container: Variants = {
 };
 
 const letter: Variants = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.42, ease: [0.2, 0.8, 0.2, 1] },
+    filter: "blur(0px)",
+    transition: { duration: 0.55, ease: [0.2, 0.8, 0.2, 1] },
   },
 };
 

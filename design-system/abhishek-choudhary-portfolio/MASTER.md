@@ -25,9 +25,10 @@ All colors are expressed as HSL components (Tailwind v3 / shadcn convention). Th
 
 | Role | HSL | Hex (approx) | CSS Variable | Usage |
 |---|---|---|---|---|
-| Background | `222 14% 7%` | `#10131A` | `--background` | Page background — slightly warm, never pure black |
+| Background | `222 16% 6%` | `#0D1018` | `--background` | Page background — deepened in the cinematic pass; blue-charcoal (trust undertone), never pure black |
 | Foreground | `0 0% 96%` | `#F5F5F5` | `--foreground` | Primary text |
-| Muted | `220 12% 12%` | `#1B1E26` | `--muted` | Card / surface background |
+| Muted | `220 12% 12%` | `#1B1E26` | `--muted` | Translucent card washes (`bg-muted/30`) |
+| Surface | `221 13% 9%` | `#14171F` | `--surface` | **Opaque** card surfaces (anything that stacks/overlaps, e.g. work-page card deck) |
 | Muted foreground | `220 8% 64%` | `#9CA0AB` | `--muted-foreground` | Secondary text, labels |
 | Border | `220 10% 16%` | `#252932` | `--border` | Hairline borders, dividers |
 | Accent | `18 91% 58%` | `#F18A3A` | `--accent` | CTAs, active nav, link hover, current pip |
@@ -38,7 +39,8 @@ All colors are expressed as HSL components (Tailwind v3 / shadcn convention). Th
 1. Solid `--background` (the HSL above)
 2. `<Noise />` overlay — ~3.5% opacity SVG turbulence, `mix-blend-overlay`, fixed across viewport
 3. `<Spotlight />` — radial gradient at cursor position, `hsl(var(--accent) / 0.06)`, fixed
-4. `<HeroAmbient />` — radial amber glow at top of hero only, 8% opacity, fades to transparent at 65%
+4. `<HeroAmbient />` — radial amber glow at top of hero only, 8% opacity, fades to transparent at 65% (doubles as the static fallback for the shader)
+4b. `<EmberField />` — WebGL fbm ember heat-field over the hero, cursor-reactive, ~60% opacity canvas; see Motion section + anti-patterns exceptions
 5. `<DotGrid />` — 24px grid with radial mask, hero-section-only
 
 **Color rules:**
@@ -104,6 +106,27 @@ Shadows are used **only** for floating elements (toasts, popovers). Project card
 | Easing: `cubic-bezier(0.2, 0.8, 0.2, 1)` | | Confident ease-out, no bouncy spring on UI |
 
 All motion gated by `@media (prefers-reduced-motion: reduce)` → durations collapse to `0ms`.
+
+**Cinematic layer (added 2026-06-12).** Scroll choreography stack: Lenis
+(inertia scroll, desktop fine-pointer only) + GSAP ScrollTrigger/SplitText +
+Framer Motion for micro-interactions. Grammar:
+
+- *Scrubbed, not timed*: scroll-driven sequences (work-deck recede,
+  featured-rail horizontal travel, outro character fill) map 1:1 to scroll
+  position — the user is the playhead.
+- *Masked line reveals* (`RevealText`) for headings; *blur-clear letter
+  rise* (`LetterReveal`) for the hero name; *terminal scramble decode*
+  (`ScrambleText`) for the role line — mount-once.
+- *Ambient exceptions* (status dots, velocity marquee, `EmberField` WebGL
+  ember shader) are documented in `docs/anti-patterns.md`.
+- Every GSAP effect sits inside `gsap.matchMedia("(prefers-reduced-motion:
+  no-preference)")`; Lenis and the shader bail out entirely for
+  reduced-motion users.
+
+**Display accent face (added 2026-06-12):** Instrument Serif italic
+(`--font-display`, `font-display` utility) — single emphasised words inside
+display headlines only ("real", "production"). Never for body, labels, or
+more than one word per headline.
 
 ---
 

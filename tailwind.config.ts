@@ -16,6 +16,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
+        surface: "hsl(var(--surface))",
         border: "hsl(var(--border))",
         accent: {
           DEFAULT: "hsl(var(--accent))",
@@ -26,6 +27,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        display: ["var(--font-display)", "Georgia", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

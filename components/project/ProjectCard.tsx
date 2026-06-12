@@ -3,6 +3,7 @@ import { ArrowUpRight, Github } from "lucide-react";
 
 import type { Project } from "@/content/schema";
 import { ARCH_DIAGRAMS } from "@/components/diagram/registry";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 interface ProjectCardProps {
   project: Project;
@@ -15,8 +16,9 @@ export function ProjectCard({ project, caseStudyLink = true }: ProjectCardProps)
   const Diagram = ARCH_DIAGRAMS[slug];
 
   return (
+    <SpotlightCard>
     <article
-      className="group relative overflow-hidden rounded-lg border border-border bg-muted/30 p-5 transition-colors duration-fast hover:border-foreground/40 sm:p-6"
+      className="group relative overflow-hidden rounded-lg border border-border bg-surface p-5 transition-colors duration-fast hover:border-foreground/40 sm:p-6"
       data-slug={slug}
     >
       <div className="relative mb-5 overflow-hidden rounded-md border border-border/60 bg-background/40 p-3 text-foreground sm:p-4">
@@ -105,5 +107,6 @@ export function ProjectCard({ project, caseStudyLink = true }: ProjectCardProps)
         )}
       </div>
     </article>
+    </SpotlightCard>
   );
 }

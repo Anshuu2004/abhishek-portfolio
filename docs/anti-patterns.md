@@ -36,7 +36,19 @@ Every PR should be checked against this list before merge.
    read as data, not decoration. Allowed only on single-character indicators.
 2. **Stack / credential marquee** in the hero. Recognised engineer-portfolio
    convention, slow enough (~50s per loop) to read as ambient ticker rather
-   than animation. Pauses on hover so users can read individual items.
+   than animation. Pauses on hover so users can read individual items. Since
+   the cinematic pass it is velocity-reactive: scroll speed adds drift/skew
+   (user-triggered), the at-rest crawl stays within this exception.
+3. **Hero ember shader** (`EmberField`). Sub-perceptual drift (~60s noise
+   cycle) that warps toward the cursor — reads as live material, not a loop.
+   Bails out for `prefers-reduced-motion` / missing WebGL (CSS `HeroAmbient`
+   is the static fallback), pauses offscreen and on hidden tabs, DPR capped.
+
+**Scroll-scrubbed choreography is user-triggered motion.** ScrollTrigger
+scrubs (work-card stack recede, featured-rail travel, outro character fill)
+move only while the user scrolls and are gated behind
+`prefers-reduced-motion: no-preference` via `gsap.matchMedia`. Lenis smooth
+scroll is disabled for reduced-motion and coarse pointers.
 
 ## Engineering
 

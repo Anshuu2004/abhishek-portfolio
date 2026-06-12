@@ -4,6 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { getAllPosts } from "@/lib/content";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { RevealText } from "@/components/motion/RevealText";
 
 export const metadata: Metadata = {
   title: "Writing",
@@ -29,9 +30,12 @@ export default async function WritingPage() {
         <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
           Writing · {posts.length} post{posts.length === 1 ? "" : "s"}
         </p>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+        <RevealText
+          as="h1"
+          className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl"
+        >
           Engineering writing
-        </h1>
+        </RevealText>
         <p className="max-w-2xl text-pretty text-muted-foreground">
           Architecture writeups, benchmarks, and the decisions behind real
           production work — not "10 tips for React".

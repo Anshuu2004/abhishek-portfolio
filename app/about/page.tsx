@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { FadeUp } from "@/components/motion/FadeUp";
+import { RevealText } from "@/components/motion/RevealText";
 import { ResumeButton } from "@/components/hero/ResumeButton";
 import { SITE } from "@/lib/site";
 
@@ -63,11 +64,20 @@ export default function AboutPage() {
           <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
             About
           </p>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          <RevealText
+            as="h1"
+            className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl"
+          >
             AI-native full-stack engineer
             <br />
-            <span className="text-muted-foreground">grounded in production code.</span>
-          </h1>
+            <span className="text-muted-foreground">
+              grounded in{" "}
+              <em className="font-display font-normal text-foreground/90">
+                production
+              </em>{" "}
+              code.
+            </span>
+          </RevealText>
         </header>
       </FadeUp>
 

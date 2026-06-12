@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ArrowUpRight, Github, Linkedin, Mail } from "lucide-react";
 
 import { FadeUp } from "@/components/motion/FadeUp";
+import { RevealText } from "@/components/motion/RevealText";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -40,9 +41,12 @@ export default function ContactPage() {
           <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
             Contact
           </p>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          <RevealText
+            as="h1"
+            className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl"
+          >
             Pick a channel.
-          </h1>
+          </RevealText>
           <p className="max-w-2xl text-pretty text-muted-foreground">
             Email is fastest. LinkedIn for intros. GitHub for code. I read all
             three.

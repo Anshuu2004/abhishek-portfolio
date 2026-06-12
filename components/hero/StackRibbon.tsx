@@ -1,4 +1,4 @@
-import { Marquee } from "@/components/motion/Marquee";
+import { VelocityMarquee } from "@/components/motion/VelocityMarquee";
 
 const STACK = [
   "Next.js 15",
@@ -27,7 +27,7 @@ export function StackRibbon() {
       <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground/70">
         Stack ↘
       </p>
-      <Marquee duration={50}>
+      <VelocityMarquee>
         {STACK.map((item) => (
           <span
             key={item}
@@ -37,7 +37,7 @@ export function StackRibbon() {
             <span aria-hidden className="text-border">·</span>
           </span>
         ))}
-      </Marquee>
+      </VelocityMarquee>
     </div>
   );
 }
