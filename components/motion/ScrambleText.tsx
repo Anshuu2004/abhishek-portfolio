@@ -69,7 +69,9 @@ export function ScrambleText({
   }, [children, delay]);
 
   return (
-    <span className={className} aria-label={children}>
+    <span className={className}>
+      {/* Real text for the accessibility tree; the scramble is decorative. */}
+      <span className="sr-only">{children}</span>
       <span aria-hidden className={started ? "" : "opacity-0"}>
         {display}
       </span>

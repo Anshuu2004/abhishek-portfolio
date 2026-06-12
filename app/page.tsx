@@ -9,7 +9,7 @@ import { MagneticButton } from "@/components/motion/MagneticButton";
 import { ScrambleText } from "@/components/motion/ScrambleText";
 import { DotGrid } from "@/components/decoration/DotGrid";
 import { HeroAmbient } from "@/components/decoration/HeroAmbient";
-import { EmberField } from "@/components/decoration/EmberField";
+import { EmberFieldLazy } from "@/components/decoration/EmberFieldLazy";
 import { AskMyPortfolio } from "@/components/hero/AskMyPortfolio";
 import { AvailabilityPill } from "@/components/hero/AvailabilityPill";
 import { MetricsStrip } from "@/components/hero/MetricsStrip";
@@ -46,7 +46,7 @@ export default async function HomePage() {
           className="pointer-events-none absolute left-1/2 top-[-7.5rem] -z-10 h-[110dvh] w-screen -translate-x-1/2 overflow-hidden"
         >
           <HeroAmbient />
-          <EmberField />
+          <EmberFieldLazy />
         </div>
         <DotGrid />
 

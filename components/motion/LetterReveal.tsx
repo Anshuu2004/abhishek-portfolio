@@ -27,23 +27,25 @@ export function LetterReveal({
   className?: string;
 }) {
   return (
-    <motion.span
-      className={className}
-      initial="hidden"
-      animate="visible"
-      variants={container}
-      aria-label={children}
-    >
+    <span className={className}>
+      {/* Real text for the accessibility tree; the letters are decorative. */}
+      <span className="sr-only">{children}</span>
+      <motion.span
+        initial="hidden"
+        animate="visible"
+        variants={container}
+        aria-hidden
+      >
       {children.split("").map((char, i) => (
         <motion.span
           key={`${char}-${i}`}
           variants={letter}
           className="inline-block"
-          aria-hidden
         >
           {char === " " ? " " : char}
         </motion.span>
       ))}
-    </motion.span>
+      </motion.span>
+    </span>
   );
 }

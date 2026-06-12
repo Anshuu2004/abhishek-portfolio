@@ -117,4 +117,17 @@
   .link-draw:focus-visible {
     background-size: 100% 1px, 100% 1px;
   }
+
+  /* Deferred ember shader fades in over the CSS ambient once it mounts. */
+  .animate-ember-in {
+    animation: ember-in 800ms var(--motion-ease) both;
+  }
+  @keyframes ember-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
