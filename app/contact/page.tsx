@@ -3,6 +3,7 @@ import { ArrowUpRight, Github, Linkedin, Mail } from "lucide-react";
 
 import { FadeUp } from "@/components/motion/FadeUp";
 import { RevealText } from "@/components/motion/RevealText";
+import { Kicker } from "@/components/ui/kicker";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -35,12 +36,10 @@ const CHANNELS = [
 
 export default function ContactPage() {
   return (
-    <section className="space-y-12">
+    <section className="space-y-16">
       <FadeUp>
         <header className="space-y-3">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            Contact
-          </p>
+          <Kicker>Contact</Kicker>
           <RevealText
             as="h1"
             className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl"
@@ -68,7 +67,7 @@ export default function ContactPage() {
                       ? "noopener noreferrer"
                       : undefined
                   }
-                  className="group flex items-start gap-4 rounded-lg border border-border bg-muted/30 p-5 transition-colors duration-fast hover:border-foreground/40 sm:p-6"
+                  className="group flex items-start gap-4 rounded-lg border border-border bg-muted/30 p-5 transition-colors duration-fast hover:border-foreground/40 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:p-6"
                 >
                   <span
                     aria-hidden

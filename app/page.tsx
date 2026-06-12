@@ -16,6 +16,7 @@ import { MetricsStrip } from "@/components/hero/MetricsStrip";
 import { ResumeButton } from "@/components/hero/ResumeButton";
 import { StackRibbon } from "@/components/hero/StackRibbon";
 import { FeaturedRail } from "@/components/work/FeaturedRail";
+import { BootSequence } from "@/components/home/BootSequence";
 import { Outro } from "@/components/home/Outro";
 
 export default async function HomePage() {
@@ -33,6 +34,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <BootSequence />
+
       {/* ——— Act I: hero. Fills the first viewport; answers who/what/where
           plus a CTA inside the recruiter's 15-second scan window. */}
       <section className="relative flex min-h-[calc(100dvh-8.5rem)] flex-col justify-center">

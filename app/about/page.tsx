@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { FadeUp } from "@/components/motion/FadeUp";
 import { RevealText } from "@/components/motion/RevealText";
 import { ResumeButton } from "@/components/hero/ResumeButton";
+import { Kicker } from "@/components/ui/kicker";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -58,12 +59,10 @@ const PRINCIPLES: { rule: string; reason: string }[] = [
 
 export default function AboutPage() {
   return (
-    <section className="space-y-14">
+    <section className="space-y-16">
       <FadeUp>
         <header className="space-y-3">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            About
-          </p>
+          <Kicker>About</Kicker>
           <RevealText
             as="h1"
             className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl"
@@ -89,7 +88,7 @@ export default function AboutPage() {
             shipping{" "}
             <a
               href="/work/simption-erp"
-              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              className="link-draw text-foreground"
             >
               Simption ERP
             </a>
@@ -101,7 +100,7 @@ export default function AboutPage() {
             Outside work I build AI products on real engineering foundations.{" "}
             <a
               href="/work/codeheal"
-              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              className="link-draw text-foreground"
             >
               CodeHeal
             </a>{" "}
@@ -109,7 +108,7 @@ export default function AboutPage() {
             using Gemini.{" "}
             <a
               href="/work/driveaware"
-              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              className="link-draw text-foreground"
             >
               DriveAware
             </a>{" "}
@@ -125,7 +124,7 @@ export default function AboutPage() {
             <a
               href={SITE.resume}
               download
-              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              className="link-draw text-foreground"
             >
               résumé
             </a>
@@ -136,9 +135,7 @@ export default function AboutPage() {
 
       <FadeUp delay={0.16}>
         <section className="space-y-4">
-          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            Facts
-          </h2>
+          <Kicker as="h2">Facts</Kicker>
           <dl className="grid gap-x-8 gap-y-3 border-y border-border/60 py-5 sm:grid-cols-[max-content_1fr]">
             {FACTS.map((fact) => (
               <div
@@ -155,9 +152,7 @@ export default function AboutPage() {
 
       <FadeUp delay={0.24}>
         <section className="space-y-4">
-          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            Now · what I&apos;m currently shipping
-          </h2>
+          <Kicker as="h2">Now · what I&apos;m currently shipping</Kicker>
           <ul className="space-y-2.5">
             {NOW.map((line) => (
               <li
@@ -173,9 +168,7 @@ export default function AboutPage() {
 
       <FadeUp delay={0.32}>
         <section className="space-y-4">
-          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            Principles · how I work
-          </h2>
+          <Kicker as="h2">Principles · how I work</Kicker>
           <ul className="space-y-4">
             {PRINCIPLES.map((p) => (
               <li
@@ -194,22 +187,20 @@ export default function AboutPage() {
 
       <FadeUp delay={0.4}>
         <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-6">
-          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-            Reach me
-          </h2>
+          <Kicker as="h2">Reach me</Kicker>
           <p className="text-pretty text-foreground/85">
             For roles, freelance briefs, or to argue about the right multi-tenancy
             strategy:{" "}
             <a
               href="mailto:abhishekcse2004@gmail.com"
-              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              className="link-draw text-foreground"
             >
               abhishekcse2004@gmail.com
             </a>
             . LinkedIn and GitHub on{" "}
             <a
               href="/contact"
-              className="text-foreground underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              className="link-draw text-foreground"
             >
               /contact
             </a>

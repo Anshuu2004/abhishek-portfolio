@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { CommandMenu } from "@/components/command-menu";
+import { Monogram } from "@/components/brand/Monogram";
 import { ResumeButton } from "@/components/hero/ResumeButton";
 
 const NAV_LINKS = [
@@ -60,14 +61,17 @@ export function Header() {
           className="font-mono text-sm font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
           aria-label="Home"
         >
-          <span className="inline-flex items-center gap-0.5">
-            <span className="text-muted-foreground">
-              {logoHovered ? "~/" : ""}
+          <span className="inline-flex items-center gap-2">
+            <Monogram className="h-[18px] w-[18px] shrink-0" />
+            <span className="inline-flex items-center gap-0.5">
+              <span className="text-muted-foreground">
+                {logoHovered ? "~/" : ""}
+              </span>
+              <span>{logoHovered ? "abhishek" : "abhishek.dev"}</span>
+              {logoHovered && (
+                <span className="ml-0.5 inline-block h-3.5 w-[1.5px] animate-pulse bg-accent align-middle" />
+              )}
             </span>
-            <span>{logoHovered ? "abhishek" : "abhishek.dev"}</span>
-            {logoHovered && (
-              <span className="ml-0.5 inline-block h-3.5 w-[1.5px] animate-pulse bg-accent align-middle" />
-            )}
           </span>
         </Link>
         <nav className="flex items-center gap-1">

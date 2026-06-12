@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, CornerDownLeft, Loader2, RotateCcw } from "lucide-react";
 
+import { Kicker } from "@/components/ui/kicker";
 import { PromptSuggestion } from "@/components/ui/prompt-suggestion";
 
 const SAMPLE_QUESTIONS = [
@@ -140,9 +141,7 @@ export function AskMyPortfolio() {
       />
 
       <div className="flex items-center justify-between gap-4">
-        <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-          Ask my portfolio · live agent
-        </p>
+        <Kicker>Ask my portfolio · live agent</Kicker>
         {demoMode !== null && (
           <span
             className={`font-mono text-[10px] uppercase tracking-[0.18em] ${

@@ -13,6 +13,7 @@ import {
   Linkedin,
   Mail,
   Search,
+  Terminal,
   User,
 } from "lucide-react";
 
@@ -45,9 +46,36 @@ const POSTS = [
   { label: "Brosplit debt simplification", href: "/writing/brosplit-debt-simplification" },
 ];
 
+// Terminal commands answer inline — the menu doubles as a tiny shell.
+const TERMINAL: { cmd: string; out: string }[] = [
+  {
+    cmd: "whoami",
+    out: "Abhishek Choudhary — AI-native full-stack engineer. Multi-tenant SaaS by day, AI products on real foundations always.",
+  },
+  {
+    cmd: "stack",
+    out: "Next.js 15 · React 19 · TypeScript · Laravel 13 · Python · OpenVINO · Gemini · Supabase · PostgreSQL · Redis · Docker",
+  },
+  {
+    cmd: "metrics",
+    out: "30 FPS edge ML on CPU · 1000+ institution architecture · 20+ self-registering modules · 6 languages auto-fixed",
+  },
+  {
+    cmd: "sudo hire-me",
+    out: "permission granted ✓ — opening mail client…",
+  },
+];
+
+const HIRE_MAILTO = `mailto:${EMAIL}?subject=${encodeURIComponent(
+  "SDE role — let's talk"
+)}`;
+
 export function CommandMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [output, setOutput] = useState<{ cmd: string; out: string } | null>(
+    null
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,9 +88,23 @@ export function CommandMenu() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  // Clear the shell output whenever the palette closes.
+  useEffect(() => {
+    if (!open) setOutput(null);
+  }, [open]);
+
   const run = useCallback((fn: () => void) => {
     setOpen(false);
     fn();
+  }, []);
+
+  const runTerminal = useCallback((entry: { cmd: string; out: string }) => {
+    setOutput(entry);
+    if (entry.cmd === "sudo hire-me") {
+      window.setTimeout(() => {
+        window.location.href = HIRE_MAILTO;
+      }, 900);
+    }
   }, []);
 
   const go = useCallback(
@@ -150,6 +192,39 @@ export function CommandMenu() {
                   ))}
                 </Command.Group>
 
+                <Command.Group heading="Terminal">
+                  {TERMINAL.map((t) => (
+                    <Item
+                      key={t.cmd}
+                      value={t.cmd}
+                      onSelect={() => runTerminal(t)}
+                    >
+                      <Terminal
+                        className="h-4 w-4 text-muted-foreground"
+                        aria-hidden
+                      />
+                      <span className="font-mono text-[13px]">{t.cmd}</span>
+                    </Item>
+                  ))}
+                  <Item
+                    value="hire"
+                    onSelect={() =>
+                      run(() => {
+                        window.location.href = HIRE_MAILTO;
+                      })
+                    }
+                  >
+                    <Terminal
+                      className="h-4 w-4 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="font-mono text-[13px]">hire</span>
+                    <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                      opens mail
+                    </span>
+                  </Item>
+                </Command.Group>
+
                 <Command.Group heading="Contact">
                   <Item
                     value="Copy email"
@@ -191,6 +266,20 @@ export function CommandMenu() {
                   </Item>
                 </Command.Group>
               </Command.List>
+
+              {output && (
+                <div
+                  aria-live="polite"
+                  className="space-y-1 border-t border-border bg-muted/30 px-4 py-3"
+                >
+                  <p className="font-mono text-[11px] text-muted-foreground">
+                    <span className="text-accent">›</span> {output.cmd}
+                  </p>
+                  <p className="font-mono text-xs leading-relaxed text-foreground">
+                    {output.out}
+                  </p>
+                </div>
+              )}
             </Command>
           </Dialog.Content>
         </Dialog.Portal>

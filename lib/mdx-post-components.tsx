@@ -59,7 +59,7 @@ export function makePostMdxComponents(): MdxComponents {
       const isExternal = !!anchorProps.href?.startsWith("http");
       return (
         <a
-          className="text-foreground underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent"
+          className="link-draw text-foreground"
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer" : undefined}
           {...anchorProps}

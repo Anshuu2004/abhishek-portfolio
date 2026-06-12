@@ -5,6 +5,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import type { ProjectWithBody } from "@/lib/content";
 import { makeProjectMdxComponents } from "@/lib/mdx-components";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { Kicker } from "@/components/ui/kicker";
 
 export function ProjectCaseStudy({ project }: { project: ProjectWithBody }) {
   const components = makeProjectMdxComponents(project.slug);
@@ -23,7 +24,7 @@ export function ProjectCaseStudy({ project }: { project: ProjectWithBody }) {
 
       <FadeUp delay={0.05}>
         <header className="space-y-4">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Kicker>
             Case study · {project.year}
             {project.featured && (
               <>
@@ -31,7 +32,7 @@ export function ProjectCaseStudy({ project }: { project: ProjectWithBody }) {
                 <span className="text-accent">Featured</span>
               </>
             )}
-          </p>
+          </Kicker>
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             {project.title}
           </h1>

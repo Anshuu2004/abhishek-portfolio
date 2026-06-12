@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { getAllPosts } from "@/lib/content";
 import { FadeUp } from "@/components/motion/FadeUp";
 import { RevealText } from "@/components/motion/RevealText";
+import { Kicker } from "@/components/ui/kicker";
 
 export const metadata: Metadata = {
   title: "Writing",
@@ -25,11 +26,11 @@ export default async function WritingPage() {
   const posts = await getAllPosts();
 
   return (
-    <section className="space-y-12">
+    <section className="space-y-16">
       <header className="space-y-3">
-        <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+        <Kicker>
           Writing · {posts.length} post{posts.length === 1 ? "" : "s"}
-        </p>
+        </Kicker>
         <RevealText
           as="h1"
           className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl"
@@ -53,7 +54,7 @@ export default async function WritingPage() {
               <FadeUp delay={i * 0.05}>
                 <Link
                   href={`/writing/${post.slug}`}
-                  className="group block py-6 transition-colors hover:bg-muted/30"
+                  className="group block py-6 transition-colors hover:bg-muted/30 focus-visible:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
                 >
                   <div className="flex items-baseline justify-between gap-6">
                     <div className="space-y-2">

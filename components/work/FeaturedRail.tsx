@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { ScrollTrigger, gsap, useGSAP } from "@/lib/gsap";
+import { Kicker } from "@/components/ui/kicker";
 
 export interface RailProject {
   title: string;
@@ -76,9 +77,7 @@ export function FeaturedRail({ projects }: { projects: RailProject[] }) {
       <div className="sticky top-0 flex min-h-[100dvh] flex-col justify-center overflow-hidden py-16">
         <div className="mb-10 flex items-end justify-between gap-6 px-6 lg:px-[max(1.5rem,calc((100vw-64rem)/2))]">
           <div className="space-y-3">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-              Selected work · scroll to travel
-            </p>
+            <Kicker>Selected work · scroll to travel</Kicker>
             <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
               Proof, not promises.
             </h2>
@@ -105,7 +104,7 @@ export function FeaturedRail({ projects }: { projects: RailProject[] }) {
               <Link
                 key={project.slug}
                 href={`/work/${project.slug}`}
-                className="group relative flex w-[78vw] max-w-[26rem] shrink-0 flex-col justify-between overflow-hidden rounded-lg border border-border bg-muted/30 p-6 transition-colors duration-slow hover:border-accent/50 sm:w-[52vw] lg:w-[30rem] lg:max-w-none"
+                className="group relative flex w-[78vw] max-w-[26rem] shrink-0 flex-col justify-between overflow-hidden rounded-lg border border-border bg-muted/30 p-6 transition-colors duration-slow hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:w-[52vw] lg:w-[30rem] lg:max-w-none"
               >
                 <span
                   aria-hidden
@@ -115,12 +114,12 @@ export function FeaturedRail({ projects }: { projects: RailProject[] }) {
                 </span>
 
                 <div className="relative space-y-4">
-                  <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <Kicker>
                     {String(i + 1).padStart(2, "0")} · {project.year}
                     {project.featured && (
                       <span className="text-accent"> · featured</span>
                     )}
-                  </p>
+                  </Kicker>
                   <h3 className="text-2xl font-semibold tracking-tight text-foreground transition-colors duration-fast group-hover:text-accent">
                     {project.title}
                   </h3>

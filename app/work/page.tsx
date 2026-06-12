@@ -4,6 +4,7 @@ import { getAllProjects } from "@/lib/content";
 import { ProjectCard } from "@/components/project/ProjectCard";
 import { CardStack } from "@/components/work/CardStack";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { Kicker } from "@/components/ui/kicker";
 
 export const metadata: Metadata = {
   title: "Work",
@@ -15,12 +16,12 @@ export default async function WorkPage() {
   const projects = await getAllProjects();
 
   return (
-    <section className="space-y-12">
+    <section className="space-y-16">
       <FadeUp>
         <header className="space-y-3">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Kicker>
             Work · {projects.length} project{projects.length === 1 ? "" : "s"} of 5
-          </p>
+          </Kicker>
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             Things I&apos;ve built
           </h1>

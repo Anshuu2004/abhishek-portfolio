@@ -46,6 +46,8 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Digits hold their width everywhere — metrics, years, dates, timers. */
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     /* Full-bleed sections use w-screen wrappers; clip the sliver of
@@ -93,5 +95,26 @@
   }
   .text-pretty {
     text-wrap: pretty;
+  }
+
+  /* Inline link with a drawn-on underline: a faint accent line is always
+     present (affordance), the full-strength line draws left-to-right on
+     hover/focus. Pure background-size transition — no layout shift. */
+  .link-draw {
+    text-decoration: none;
+    padding-bottom: 2px;
+    background-image: linear-gradient(
+        hsl(var(--accent)),
+        hsl(var(--accent))
+      ),
+      linear-gradient(hsl(var(--accent) / 0.35), hsl(var(--accent) / 0.35));
+    background-size: 0% 1px, 100% 1px;
+    background-position: 0 100%, 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size var(--motion-base) var(--motion-ease);
+  }
+  .link-draw:hover,
+  .link-draw:focus-visible {
+    background-size: 100% 1px, 100% 1px;
   }
 }

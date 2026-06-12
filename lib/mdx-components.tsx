@@ -1,6 +1,7 @@
 import type { ComponentType, HTMLAttributes, ReactNode } from "react";
 
 import { ARCH_DIAGRAMS } from "@/components/diagram/registry";
+import { DiagramReveal } from "@/components/diagram/DiagramReveal";
 
 type MdxComponents = Record<string, ComponentType<HTMLAttributes<HTMLElement>>>;
 type MdxElProps = HTMLAttributes<HTMLElement> & { children?: ReactNode };
@@ -27,7 +28,9 @@ export function makeProjectMdxComponents(slug: string): MdxComponents {
           </h2>
           {isArch && Diagram && (
             <div className="my-6 rounded-lg border border-border bg-muted/20 p-4 text-foreground sm:p-6">
-              <Diagram />
+              <DiagramReveal>
+                <Diagram />
+              </DiagramReveal>
             </div>
           )}
         </>
@@ -77,7 +80,7 @@ export function makeProjectMdxComponents(slug: string): MdxComponents {
       const isExternal = !!anchorProps.href?.startsWith("http");
       return (
         <a
-          className="text-foreground underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent"
+          className="link-draw text-foreground"
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer" : undefined}
           {...anchorProps}

@@ -1,4 +1,5 @@
 import { CountUp } from "@/components/motion/CountUp";
+import { Kicker } from "@/components/ui/kicker";
 
 /**
  * Recruiter-first proof strip. Hiring research says a screener gives the
@@ -52,9 +53,7 @@ export function MetricsStrip() {
                 <CountUp value={m.value} suffix={m.suffix} />
               </p>
               <p className="text-sm text-foreground/85">{m.label}</p>
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-                {m.detail}
-              </p>
+              <Kicker>{m.detail}</Kicker>
             </dd>
           </div>
         ))}

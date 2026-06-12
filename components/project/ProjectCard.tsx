@@ -3,6 +3,7 @@ import { ArrowUpRight, Github } from "lucide-react";
 
 import type { Project } from "@/content/schema";
 import { ARCH_DIAGRAMS } from "@/components/diagram/registry";
+import { DiagramReveal } from "@/components/diagram/DiagramReveal";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 interface ProjectCardProps {
@@ -23,7 +24,9 @@ export function ProjectCard({ project, caseStudyLink = true }: ProjectCardProps)
     >
       <div className="relative mb-5 overflow-hidden rounded-md border border-border/60 bg-background/40 p-3 text-foreground sm:p-4">
         {Diagram ? (
-          <Diagram />
+          <DiagramReveal>
+            <Diagram />
+          </DiagramReveal>
         ) : (
           <div className="flex h-40 items-center justify-center">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
@@ -39,7 +42,7 @@ export function ProjectCard({ project, caseStudyLink = true }: ProjectCardProps)
             {caseStudyLink ? (
               <Link
                 href={`/work/${slug}`}
-                className="transition-colors hover:text-accent"
+                className="rounded-sm transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 {title}
                 <ArrowUpRight

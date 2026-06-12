@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
 
 import { ResumeButton } from "@/components/hero/ResumeButton";
+import { Kicker } from "@/components/ui/kicker";
 import { SITE } from "@/lib/site";
 import { SplitText, gsap, useGSAP } from "@/lib/gsap";
 
@@ -47,9 +48,7 @@ export function Outro() {
       ref={ref}
       className="flex min-h-[70dvh] flex-col items-start justify-center space-y-10 py-20"
     >
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-        Next step
-      </p>
+      <Kicker>Next step</Kicker>
 
       <h2
         data-outro-heading
