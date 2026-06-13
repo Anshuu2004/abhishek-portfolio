@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { getLenis } from "@/lib/lenis-store";
+
 /**
  * Signature hero backdrop: a hand-written WebGL fragment shader rendering a
  * slow ember heat-field — fbm noise drifting upward in the accent hue over
@@ -33,6 +35,7 @@ precision mediump float;
 uniform vec2 uRes;
 uniform float uTime;
 uniform vec2 uMouse;
+uniform float uScroll; // 0 at rest, ramps with scroll velocity (ignition)
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -64,8 +67,9 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   vec2 p = uv * vec2(uRes.x / uRes.y, 1.0) * 2.2;
 
-  // Slow upward drift — the "heat" rises.
-  float t = uTime * 0.045;
+  // Slow upward drift — the "heat" rises. Scroll velocity stokes it: the
+  // field rushes upward and the embers brighten the faster you move.
+  float t = uTime * (0.045 + uScroll * 0.10);
   vec2 drift = vec2(t * 0.35, -t);
 
   // Cursor warp: field bends toward the pointer with a soft falloff.
@@ -82,6 +86,9 @@ void main() {
 
   // Cursor adds a faint warm swell of its own.
   energy += exp(-md * 2.6) * 0.05;
+
+  // Ignition: scrolling lifts the whole field's energy so the embers flare.
+  energy *= 1.0 + uScroll * 0.85;
 
   // Grade: deep blue-charcoal shadows -> ember core (accent hue 18deg).
   vec3 shadow = vec3(0.016, 0.024, 0.045);
@@ -149,6 +156,7 @@ export function EmberField({ className = "" }: { className?: string }) {
     const uRes = gl.getUniformLocation(prog, "uRes");
     const uTime = gl.getUniformLocation(prog, "uTime");
     const uMouse = gl.getUniformLocation(prog, "uMouse");
+    const uScroll = gl.getUniformLocation(prog, "uScroll");
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -183,14 +191,23 @@ export function EmberField({ className = "" }: { className?: string }) {
     let running = true;
     let start = performance.now();
     let pausedAt = 0;
+    let ignition = 0; // smoothed scroll-velocity drive for the shader
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       mouseX += (targetX - mouseX) * 0.06;
       mouseY += (targetY - mouseY) * 0.06;
+
+      // Read Lenis scroll velocity (falls back to 0 if smooth scroll is off,
+      // e.g. touch / reduced-motion) and ease toward it so flares decay.
+      const lenis = getLenis();
+      const v = lenis ? Math.min(Math.abs(lenis.velocity) / 28, 1) : 0;
+      ignition += (v - ignition) * (v > ignition ? 0.25 : 0.05);
+
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform1f(uTime, (now - start) / 1000);
       gl.uniform2f(uMouse, mouseX, mouseY);
+      gl.uniform1f(uScroll, ignition);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);

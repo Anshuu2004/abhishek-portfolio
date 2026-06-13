@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { ScrollTrigger, gsap, useGSAP } from "@/lib/gsap";
 import { Kicker } from "@/components/ui/kicker";
+import { TiltCard } from "@/components/motion/TiltCard";
 
 export interface RailProject {
   title: string;
@@ -101,10 +102,13 @@ export function FeaturedRail({ projects }: { projects: RailProject[] }) {
             className="flex w-max gap-5 px-6 will-change-transform lg:px-[max(1.5rem,calc((100vw-64rem)/2))]"
           >
             {projects.map((project, i) => (
-              <Link
+              <TiltCard
                 key={project.slug}
+                className="w-[78vw] max-w-[26rem] shrink-0 sm:w-[52vw] lg:w-[30rem] lg:max-w-none"
+              >
+              <Link
                 href={`/work/${project.slug}`}
-                className="group relative flex w-[78vw] max-w-[26rem] shrink-0 flex-col justify-between overflow-hidden rounded-lg border border-border bg-muted/30 p-6 transition-colors duration-slow hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:w-[52vw] lg:w-[30rem] lg:max-w-none"
+                className="group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-lg border border-border bg-muted/30 p-6 transition-colors duration-slow hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 <span
                   aria-hidden
@@ -145,6 +149,7 @@ export function FeaturedRail({ projects }: { projects: RailProject[] }) {
                   </span>
                 </div>
               </Link>
+              </TiltCard>
             ))}
           </div>
         </div>

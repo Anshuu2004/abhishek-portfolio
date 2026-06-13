@@ -50,6 +50,19 @@ move only while the user scrolls and are gated behind
 `prefers-reduced-motion: no-preference` via `gsap.matchMedia`. Lenis smooth
 scroll is disabled for reduced-motion and coarse pointers.
 
+**Cursor-driven effects (added 2026-06-13):**
+- `EmberCursor` — spark trail shed from the pointer. Ambient exception in
+  the same family as the shader: it only emits *in response to pointer
+  movement* (still cursor → no particles), pooled (90 sparks, no per-frame
+  alloc), parks its rAF loop when empty. Off for touch + reduced-motion.
+- `EmberField` ignition — scroll velocity (read from Lenis) raises the
+  shader's energy/drift. User-triggered; decays to the at-rest crawl.
+- `TiltCard` 3D perspective tilt on the featured cards. **Explicit, scoped
+  exception to "no scale-on-hover":** it is a `rotateX/rotateY` in
+  perspective, not a 2D `scale`, so it adds depth without the layout-shift
+  jump the rule guards against. Transform-only, flattens to a static card
+  for reduced-motion / coarse pointers.
+
 ## Engineering
 
 - ❌ **Raw Tailwind color names** (`bg-zinc-950`) — use design tokens (`bg-background`) so a future token change doesn't require codebase grep.

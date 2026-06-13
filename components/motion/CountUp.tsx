@@ -34,16 +34,32 @@ export function CountUp({
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const counter = { n: 0 };
-        gsap.to(counter, {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: el, start: "top 90%", once: true },
+        });
+
+        // Count up to the value…
+        tl.to(counter, {
           n: value,
           duration,
           ease: EASE_OUT,
-          scrollTrigger: { trigger: el, start: "top 90%", once: true },
           onUpdate: () => {
             el.textContent = `${prefix}${counter.n.toFixed(decimals)}${suffix}`;
           },
+        });
+
+        // …then a mechanical "lock": two quick flickers as the digits settle,
+        // like a split-flap display snapping into place.
+        tl.to(el, {
+          keyframes: {
+            opacity: [1, 0.35, 1, 0.6, 1],
+            "--lock-x": ["0px", "-1px", "1px", "0px", "0px"],
+          },
+          duration: 0.32,
+          ease: "steps(5)",
           onComplete: () => {
             el.textContent = final;
+            el.style.removeProperty("opacity");
           },
         });
       });

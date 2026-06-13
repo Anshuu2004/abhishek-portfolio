@@ -7,6 +7,7 @@ import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { Spotlight } from "@/components/decoration/Spotlight";
 import { Noise } from "@/components/decoration/Noise";
 import { CustomCursor } from "@/components/decoration/CustomCursor";
+import { EmberCursor } from "@/components/decoration/EmberCursor";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { SITE } from "@/lib/site";
 import "./globals.css";
@@ -129,6 +130,7 @@ export default function RootLayout({
         <ScrollProgress />
         <Noise />
         <Spotlight />
+        <EmberCursor />
         <CustomCursor />
         <Header />
         <main className="relative z-10 mx-auto min-h-[calc(100vh-14rem)] max-w-5xl px-6 py-16">
